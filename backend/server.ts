@@ -28,7 +28,7 @@ router
     ctx.response.body = 'Shutting down...';
   })
   .post("/server/command", async (ctx) => {
-    await p.stdin.write(encoder.encode(values.command + "\n"));
+    // await p.stdin.write(encoder.encode(values.command + "\n"));
   })
 
 
