@@ -1,7 +1,5 @@
-import './app'
+import './app/app'
 
-const mount = document.querySelector(".js-hmmm-mount");
-
-const element = document.createElement("my-element");
-
+const mount = document.querySelector("body");
+const element = document.createElement("hmmm-app");
 mount.append(element);
