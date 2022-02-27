@@ -12,11 +12,11 @@ export class Sidebar extends LitElement {
     .sidebar {
       width: 0;
       overflow: hidden;
-      transition: width 0.5s fade-in;
+      transition: width 0.2s;
     }
 
     .sidebar--open {
-      width: auto;
+      width: 100%;
     }
   `;
 
