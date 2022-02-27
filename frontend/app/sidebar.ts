@@ -15,10 +15,6 @@ export class Sidebar extends LitElement {
   }
 
   render() {
-    return html`
-      <div class="sidebar ${this.open ? "sidebar--open" : ""}">
-        Me the sidebar
-      </div>
-    `;
+    return html` <div>Me the sidebar</div> `;
   }
 }
