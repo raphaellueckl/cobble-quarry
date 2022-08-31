@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "cp index.html public/index.html && esbuild index.ts --bundle --outfile=public/index.js",
+    "build": "mkdir -p public && cp index.html public/index.html && esbuild index.ts --bundle --outfile=public/index.js",
     "start": "http-server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

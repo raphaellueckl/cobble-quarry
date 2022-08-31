@@ -13,14 +13,18 @@ const router = new Router();
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+let p;//: Process<any>|undefined;
+
+Deno.env.set("LD_LIBRARY_PATH", ".")
+
 router
   .get("/", async (ctx) => {
     await send(ctx, 'index.html', {
       root: `${Deno.cwd()}/public`,
     });
   })
-  .get("/server/start", (ctx) => {
-    // startServer();
+  .get("/start", (ctx) => {
+    startServer();
     ctx.response.body = 'Starting up...';
   })
   .get("/server/stop", (ctx) => {
@@ -32,17 +36,18 @@ router
   })
 
 
-// const startServer = async () => {
-//   p = Deno.run({
-//     cmd: ["java", "-Xmx1024M", "-Xms1024M", "-jar", "server.jar", "nogui"],
-//     stdout: "piped",
-//     stdin: "piped",
-//     stderr: "piped",
-//   });
+const startServer = async () => {
+  p = Deno.run({
+    cmd: ["./bedrock_server"],
+    // cwd: "./backend",
+    stdout: "piped",
+    stdin: "piped",
+    stderr: "piped",
+  });
 
-//   Deno.copy(p.stdout, Deno.stdout);
-//   Deno.copy(p.stdout, Deno.stdout);
-// }
+  Deno.copy(p.stdout, Deno.stdout);
+  Deno.copy(p.stdout, Deno.stdout);
+}
 
 // const stopServer = async () => {
 //   if (p !== null) {
