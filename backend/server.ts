@@ -13,7 +13,7 @@ const router = new Router();
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-let p;//: Process<any>|undefined;
+let mcProcess;//: Process<any>|undefined;
 
 Deno.env.set("LD_LIBRARY_PATH", ".")
 
@@ -25,19 +25,23 @@ router
   })
   .get("/start", (ctx) => {
     startServer();
-    ctx.response.body = 'Starting up...';
+    ctx.response.body = 'Starting server...';
   })
-  .get("/server/stop", (ctx) => {
-    // stopServer();
-    ctx.response.body = 'Shutting down...';
+  .get("/stop", (ctx) => {
+    stopServer();
+    ctx.response.body = 'Stopping server...';
   })
-  .post("/server/command", async (ctx) => {
-    // await p.stdin.write(encoder.encode(values.command + "\n"));
+  .post("/command", async (ctx) => {
+    if (mcProcess !== null) {
+      const command = await ctx.request.body().value;
+      console.log(`Executing: /${command}`);
+      await mcProcess.stdin.write(encoder.encode(command + "\n"));
+    }
   })
 
 
 const startServer = async () => {
-  p = Deno.run({
+  mcProcess = Deno.run({
     cmd: ["./bedrock_server"],
     // cwd: "./backend",
     stdout: "piped",
@@ -45,22 +49,24 @@ const startServer = async () => {
     stderr: "piped",
   });
 
-  Deno.copy(p.stdout, Deno.stdout);
-  Deno.copy(p.stdout, Deno.stdout);
+  Deno.copy(mcProcess.stdout, Deno.stdout);
+  Deno.copy(mcProcess.stdout, Deno.stdout);
 }
 
-// const stopServer = async () => {
-//   if (p !== null) {
-//     try {
-//       await p.stdin.write(encoder.encode("/stop"));
-//     } catch {
-//       console.log("closing the server failed");
-//     }
+const stopServer = async () => {
+  if (mcProcess !== null) {
+    try {
+      await mcProcess.stdin.write(encoder.encode("/stop"));
+    } catch {
+      console.log("closing the server failed");
+    }
 
-//     await p.stdin.close();
-//     serverState = "Shut down minecraft."
-//   }
-// }
+    await mcProcess.stdin.close();
+    serverState = "Shut down minecraft."
+  } else {
+    console.log("Server is not running!")
+  }
+}
 
 app.use(async (ctx, next) => {
   console.log(`${ctx.request.method} ${ctx.request.url}`);
