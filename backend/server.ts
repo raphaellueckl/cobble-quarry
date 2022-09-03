@@ -2,19 +2,12 @@ import { Application, Router, send } from "https://deno.land/x/oak/mod.ts";
 import { readLines } from "https://deno.land/std@0.104.0/io/mod.ts";
 import * as conversion from "https://deno.land/std@0.152.0/streams/conversion.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
+
 const app = new Application();
 const port = 3000;
 Deno.env.set("LD_LIBRARY_PATH", ".");
-
-app.use(
-  oakCors({
-    origin: "*",
-  })
-);
-
 const router = new Router();
 const encoder = new TextEncoder();
-const decoder = new TextDecoder();
 
 const STARTED = "STARTED";
 const STOPPED = "STOPPED";
@@ -27,6 +20,9 @@ let serverState = STOPPED;
 let playerCount = 0;
 
 router
+  .get("/status", (ctx) => {
+    ctx.response.body = { state: serverState };
+  })
   .get("/start", (ctx) => {
     if (serverState === STOPPED) {
       serverState = PROGRESS;
@@ -43,7 +39,7 @@ router
       ctx.response.body = { serverState: STOPPED };
       return;
     }
-    ctx.response.body = { serverState: "ALREADY_STOPPED" };
+    ctx.response.body = { state: "ALREADY_STOPPED" };
   })
   .post("/command", async (ctx) => {
     if (
@@ -63,7 +59,9 @@ const messageObserver = async (reader: Deno.Reader, writer: Deno.Writer) => {
   const encoder = new TextEncoder();
   for await (const line of readLines(reader)) {
     await conversion.writeAll(writer, encoder.encode(`${line}\n`));
-    if (line.includes("======================================================")) {
+    if (
+      line.includes("======================================================")
+    ) {
       serverState = STARTED;
     } else if (line.includes(" Player connected: ")) {
       ++playerCount;
@@ -88,12 +86,12 @@ const startServer = async () => {
 };
 
 const stopServer = async () => {
-    try {
-      await mcProcess.stdin.write(encoder.encode("stop\n"));
-    } catch {
-      console.log("closing the server failed");
-    }
-    await mcProcess.stdin.close();
+  try {
+    await mcProcess.stdin.write(encoder.encode("stop\n"));
+  } catch {
+    console.log("closing the server failed");
+  }
+  await mcProcess.stdin.close();
 };
 
 // Potentially unused
@@ -109,6 +107,11 @@ app.use(async (ctx, next) => {
 
 app.use(router.routes());
 app.use(router.allowedMethods());
+app.use(
+  oakCors({
+    origin: "*",
+  })
+);
 
 app.listen({ port });
 
