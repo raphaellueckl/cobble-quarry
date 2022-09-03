@@ -2,7 +2,7 @@ import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { store, Events } from "./store";
 
-@customElement("hmmm-navbar")
+@customElement("cq-navbar")
 export class Navbar extends LitElement {
   static styles = css`
     div {

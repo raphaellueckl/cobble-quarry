@@ -3,8 +3,8 @@ import { customElement, property } from "lit/decorators.js";
 import "./navbar";
 import "./container";
 
-@customElement("hmmm-app")
-export class HmmmApp extends LitElement {
+@customElement("cq-app")
+export class CqApp extends LitElement {
   static styles = css`
     span {
       color: green;
@@ -16,8 +16,8 @@ export class HmmmApp extends LitElement {
 
   render() {
     return html`
-      <hmmm-navbar></hmmm-navbar>
-      <hmmm-container></hmmm-container>
+      <cq-navbar></cq-navbar>
+      <cq-container></cq-container>
     `;
   }
 }

@@ -4,20 +4,20 @@ import { store, Events } from "./store";
 import "./content";
 import "./sidebar";
 
-@customElement("hmmm-container")
+@customElement("cq-container")
 export class Container extends LitElement {
   static styles = css`
     div {
       display: flex;
     }
 
-    hmmm-content {
+    cq-content {
       width: 0;
       transition: width 0.2s;
       overflow: hidden;
     }
 
-    hmmm-sidebar {
+    cq-sidebar {
       width: 0;
       transition: width 0.2s;
       overflow: hidden;
@@ -38,8 +38,8 @@ export class Container extends LitElement {
   render() {
     return html`
       <div>
-        <hmmm-content class="${!this.sidebarOpen ? "open" : ""}"></hmmm-content>
-        <hmmm-sidebar class="${this.sidebarOpen ? "open" : ""}"></hmmm-sidebar>
+        <cq-content class="${!this.sidebarOpen ? "open" : ""}"></cq-content>
+        <cq-sidebar class="${this.sidebarOpen ? "open" : ""}"></cq-sidebar>
       </div>
     `;
   }
