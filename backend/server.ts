@@ -1,7 +1,10 @@
 import { Application, Router, send } from "https://deno.land/x/oak/mod.ts";
+import { readLines } from "https://deno.land/std@0.104.0/io/mod.ts";
+import * as mod from "https://deno.land/std@0.104.0/io/util.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
 const app = new Application();
 const port = 3000;
+Deno.env.set("LD_LIBRARY_PATH", ".")
 
 app.use(
   oakCors({
@@ -13,9 +16,12 @@ const router = new Router();
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-let mcProcess;//: Process<any>|undefined;
+const STOPPED = 0;
+const STARTED = 1;
+const PROGRESS = 2;
 
-Deno.env.set("LD_LIBRARY_PATH", ".")
+let mcProcess;//: Process<any>|undefined;
+let serverState = STOPPED;
 
 router
   .get("/", async (ctx) => {
@@ -24,7 +30,11 @@ router
     });
   })
   .get("/start", (ctx) => {
-    startServer();
+    if (serverState === STOPPED) {
+      serverState = PROGRESS;
+      startServer();
+      serverState = STARTED;
+    }
     ctx.response.body = 'Starting server...';
   })
   .get("/stop", (ctx) => {
@@ -39,18 +49,26 @@ router
     }
   })
 
+const messageObserver = async (
+  reader: Deno.Reader,
+  writer: Deno.Writer,
+) => {
+  const encoder = new TextEncoder();
+  for await (const line of readLines(reader)) {
+    await mod.writeAll(writer, encoder.encode(`${line}\n`));
+  }
+}
 
 const startServer = async () => {
   mcProcess = Deno.run({
     cmd: ["./bedrock_server"],
-    // cwd: "./backend",
     stdout: "piped",
     stdin: "piped",
     stderr: "piped",
   });
 
-  Deno.copy(mcProcess.stdout, Deno.stdout);
-  Deno.copy(mcProcess.stdout, Deno.stdout);
+  messageObserver(mcProcess.stdout, Deno.stdout);
+  messageObserver(mcProcess.stderr, Deno.stderr);
 }
 
 const stopServer = async () => {
@@ -78,4 +96,4 @@ app.use(router.allowedMethods());
 
 app.listen({ port });
 
-console.log(`API listening on: 'localhost:${port}'`);
+console.log(`Listening on: localhost:${port}`);
