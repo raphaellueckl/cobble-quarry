@@ -20,7 +20,7 @@ const STOPPED = 0;
 const STARTED = 1;
 const PROGRESS = 2;
 
-let mcProcess;//: Process<any>|undefined;
+let mcProcess = null;//: Process<any>|null;
 let serverState = STOPPED;
 
 router
@@ -37,9 +37,13 @@ router
     }
     ctx.response.body = 'Starting server...';
   })
-  .get("/stop", (ctx) => {
-    stopServer();
-    ctx.response.body = 'Stopping server...';
+  .get("/stop", async (ctx) => {
+    if (mcProcess !== null) {
+      serverState = PROGRESS;
+      await stopServer();
+      serverState = STOPPED;
+    }
+    ctx.response.body = {serverState: STOPPED};
   })
   .post("/command", async (ctx) => {
     if (mcProcess !== null) {
@@ -74,17 +78,22 @@ const startServer = async () => {
 const stopServer = async () => {
   if (mcProcess !== null) {
     try {
-      await mcProcess.stdin.write(encoder.encode("/stop"));
+      await mcProcess.stdin.write(encoder.encode("stop\n"));
+      await timer(3000);
     } catch {
       console.log("closing the server failed");
     }
 
     await mcProcess.stdin.close();
-    serverState = "Shut down minecraft."
   } else {
     console.log("Server is not running!")
   }
 }
+
+const timer = (delay) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, delay);
+  });
 
 app.use(async (ctx, next) => {
   console.log(`${ctx.request.method} ${ctx.request.url}`);
