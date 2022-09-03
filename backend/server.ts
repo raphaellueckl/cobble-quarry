@@ -24,13 +24,13 @@ const FAILED = "FAILED";
 
 let mcProcess = null; //: Process<any>|null;
 let serverState = STOPPED;
+let playerCount = 0;
 
 router
   .get("/start", (ctx) => {
     if (serverState === STOPPED) {
       serverState = PROGRESS;
       startServer();
-      serverState = STARTED;
       ctx.response.body = { state: STARTED };
       return;
     }
@@ -40,7 +40,6 @@ router
     if (mcProcess !== null) {
       serverState = PROGRESS;
       await stopServer();
-      serverState = STOPPED;
       ctx.response.body = { serverState: STOPPED };
       return;
     }
@@ -66,11 +65,11 @@ const messageObserver = async (reader: Deno.Reader, writer: Deno.Writer) => {
     await conversion.writeAll(writer, encoder.encode(`${line}\n`));
     if (line.includes("======================================================")) {
       serverState = STARTED;
-    } else if (line.includes("connected")) {
+    } else if (line.includes(" Player connected: ")) {
       ++playerCount;
-    } else if (line.includes("disconnected")) {
+    } else if (line.includes(" Player disconnected: ")) {
       --playerCount;
-    } else if (line.includes("quit correctly")) {
+    } else if (line.includes("Quit correctly")) {
       serverState = STOPPED;
     }
   }
@@ -89,20 +88,15 @@ const startServer = async () => {
 };
 
 const stopServer = async () => {
-  if (mcProcess !== null) {
     try {
       await mcProcess.stdin.write(encoder.encode("stop\n"));
-      await timer(3000);
     } catch {
       console.log("closing the server failed");
     }
-
     await mcProcess.stdin.close();
-  } else {
-    console.log("Server is not running!");
-  }
 };
 
+// Potentially unused
 const timer = (delay) =>
   new Promise((resolve) => {
     setTimeout(resolve, delay);
