@@ -26,11 +26,6 @@ let mcProcess = null; //: Process<any>|null;
 let serverState = STOPPED;
 
 router
-  .get("/", async (ctx) => {
-    await send(ctx, "index.html", {
-      root: `${Deno.cwd()}/public`,
-    });
-  })
   .get("/start", (ctx) => {
     if (serverState === STOPPED) {
       serverState = PROGRESS;
@@ -68,7 +63,8 @@ router
 const messageObserver = async (reader: Deno.Reader, writer: Deno.Writer) => {
   const encoder = new TextEncoder();
   for await (const line of readLines(reader)) {
-    if (line.includes("==================")) {
+    await conversion.writeAll(writer, encoder.encode(`${line}\n`));
+    if (line.includes("======================================================")) {
       serverState = STARTED;
     } else if (line.includes("connected")) {
       ++playerCount;
@@ -77,7 +73,6 @@ const messageObserver = async (reader: Deno.Reader, writer: Deno.Writer) => {
     } else if (line.includes("quit correctly")) {
       serverState = STOPPED;
     }
-    await conversion.writeAll(writer, encoder.encode(`${line}\n`));
   }
 };
 
@@ -122,5 +117,16 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 app.listen({ port });
+
+app.use(async (context, next) => {
+  try {
+    await context.send({
+      root: `${Deno.cwd()}/../frontend/public`,
+      index: "index.html",
+    });
+  } catch {
+    await next();
+  }
+});
 
 console.log(`Listening on: localhost:${port}`);
