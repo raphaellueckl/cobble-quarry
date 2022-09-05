@@ -1,4 +1,9 @@
-import { Application, Middleware, Router, send } from "https://deno.land/x/oak/mod.ts";
+import {
+  Application,
+  Middleware,
+  Router,
+  send,
+} from "https://deno.land/x/oak/mod.ts";
 import { readLines } from "https://deno.land/std@0.104.0/io/mod.ts";
 import * as conversion from "https://deno.land/std@0.152.0/streams/conversion.ts";
 import * as stdCopy from "https://deno.land/std@0.149.0/fs/copy.ts";
@@ -19,8 +24,8 @@ const FAILED = "FAILED";
 let mcProcess: Deno.Process | null = null; //: Process<any>|null;
 let serverState = STOPPED;
 let playerCount = 0;
-let backupPath: string = Deno.env.get("BACKUP_PATH") || '';
-console.log(backupPath);
+let backupPath: string = Deno.env.get("BACKUP_PATH") || "";
+console.log("Backup Path:", backupPath);
 
 router
   .get("/status", (ctx) => {
@@ -38,7 +43,7 @@ router
   .get("/stop", async (ctx) => {
     if (mcProcess !== null) {
       serverState = PROGRESS;
-      await stopServer();
+      await stopServer(0);
       ctx.response.body = { serverState: STOPPED };
       return;
     }
@@ -59,15 +64,18 @@ router
   })
   .post("/backup", async () => {
     if (backupPath) {
-      await stopServer();
+      await stopServer(20);
       await stdCopy.copy(Deno.cwd(), backupPath);
       startServer();
     } else {
-      console.log('No "BACKUP_PATH" environment variable given.')
+      console.log('No "BACKUP_PATH" environment variable given.');
     }
   });
 
-const messageObserver = async (reader: Deno.Reader|null, writer: Deno.Writer) => {
+const messageObserver = async (
+  reader: Deno.Reader | null,
+  writer: Deno.Writer
+) => {
   if (!reader) return;
   const encoder = new TextEncoder();
   for await (const line of readLines(reader)) {
@@ -79,7 +87,8 @@ const messageObserver = async (reader: Deno.Reader|null, writer: Deno.Writer) =>
     } else if (line.includes(" Player connected: ")) {
       ++playerCount;
     } else if (line.includes(" Player disconnected: ")) {
-      --playerCount;
+      if (--playerCount === 0) {
+      }
     } else if (line.includes("Quit correctly")) {
       serverState = STOPPED;
     }
@@ -98,16 +107,21 @@ const startServer = async () => {
   messageObserver(mcProcess.stderr, Deno.stderr);
 };
 
-const stopServer = async () => {
+const stopServer = async (offset?: number) => {
   try {
+    if (offset) {
+      for (let i = offset; i > 0; i--) {
+        await mcProcess?.stdin?.write(encoder.encode(`Server stop in ${i}\n`));
+        await timer(1000);
+      }
+    }
     await mcProcess?.stdin?.write(encoder.encode("stop\n"));
+    await mcProcess?.stdin?.close();
   } catch {
     console.log("closing the server failed");
   }
-  await mcProcess?.stdin?.close();
 };
 
-// Potentially unused
 const timer = (delayInMillis: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, delayInMillis);
