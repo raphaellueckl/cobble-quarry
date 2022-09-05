@@ -1,6 +1,7 @@
-import { Application, Router, send } from "https://deno.land/x/oak/mod.ts";
+import { Application, Middleware, Router, send } from "https://deno.land/x/oak/mod.ts";
 import { readLines } from "https://deno.land/std@0.104.0/io/mod.ts";
 import * as conversion from "https://deno.land/std@0.152.0/streams/conversion.ts";
+import * as stdCopy from "https://deno.land/std@0.149.0/fs/copy.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
 
 const app = new Application();
@@ -15,9 +16,11 @@ const PROGRESS = "PROGRESS";
 const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
 
-let mcProcess = null; //: Process<any>|null;
+let mcProcess: Deno.Process | null = null; //: Process<any>|null;
 let serverState = STOPPED;
 let playerCount = 0;
+let backupPath: string = Deno.env.get("BACKUP_PATH") || '';
+console.log(backupPath);
 
 router
   .get("/status", (ctx) => {
@@ -48,14 +51,24 @@ router
     ) {
       const command = await ctx.request.body().value;
       console.log(`Executing: /${command}`);
-      await mcProcess.stdin.write(encoder.encode(command + "\n"));
+      await mcProcess?.stdin?.write(encoder.encode(command + "\n"));
       ctx.response.body = { state: SUCCESS };
       return;
     }
     ctx.response.body = { state: FAILED };
+  })
+  .post("/backup", async () => {
+    if (backupPath) {
+      await stopServer();
+      await stdCopy.copy(Deno.cwd(), backupPath);
+      startServer();
+    } else {
+      console.log('No "BACKUP_PATH" environment variable given.')
+    }
   });
 
-const messageObserver = async (reader: Deno.Reader, writer: Deno.Writer) => {
+const messageObserver = async (reader: Deno.Reader|null, writer: Deno.Writer) => {
+  if (!reader) return;
   const encoder = new TextEncoder();
   for await (const line of readLines(reader)) {
     await conversion.writeAll(writer, encoder.encode(`${line}\n`));
@@ -87,17 +100,17 @@ const startServer = async () => {
 
 const stopServer = async () => {
   try {
-    await mcProcess.stdin.write(encoder.encode("stop\n"));
+    await mcProcess?.stdin?.write(encoder.encode("stop\n"));
   } catch {
     console.log("closing the server failed");
   }
-  await mcProcess.stdin.close();
+  await mcProcess?.stdin?.close();
 };
 
 // Potentially unused
-const timer = (delay) =>
+const timer = (delayInMillis: number) =>
   new Promise((resolve) => {
-    setTimeout(resolve, delay);
+    setTimeout(resolve, delayInMillis);
   });
 
 app.use(async (ctx, next) => {
