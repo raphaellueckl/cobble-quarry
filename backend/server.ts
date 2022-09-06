@@ -21,6 +21,9 @@ const PROGRESS = "PROGRESS";
 const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
 
+const ONE_MINUTE = 60 * 1000;
+let serverIdleMinutes = 0;
+
 let mcProcess: Deno.Process | null = null; //: Process<any>|null;
 let serverState = STOPPED;
 let playerCount = 0;
@@ -126,6 +129,22 @@ const timer = (delayInMillis: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, delayInMillis);
   });
+
+const idleServerStop = async () => {
+  while (true) {
+    await timer(ONE_MINUTE);
+    if (playerCount === 0) {
+      if (++serverIdleMinutes === 30) {
+        await stopServer();
+        // TODO shutdown
+      }
+    } else {
+      serverIdleMinutes = 0;
+    }
+  }
+};
+
+idleServerStop();
 
 app.use(async (ctx, next) => {
   console.log(`${ctx.request.method} ${ctx.request.url}`);
