@@ -25,10 +25,10 @@ const ONE_MINUTE = 60 * 1000;
 let serverIdleMinutes = 0;
 
 let mcProcess: Deno.Process | null = null; //: Process<any>|null;
-let serverState = STOPPED;
+let serverState = PROGRESS;
 let playerCount = 0;
 let backupPath: string = Deno.env.get("BACKUP_PATH") || "";
-console.log("Backup Path:", backupPath);
+console.log("Backup Path: ", backupPath);
 
 router
   .get("/status", (ctx) => {
@@ -144,6 +144,7 @@ const idleServerStop = async () => {
   }
 };
 
+startServer();
 idleServerStop();
 
 app.use(async (ctx, next) => {
