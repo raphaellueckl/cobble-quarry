@@ -1,17 +1,16 @@
-import {
-  Application,
-  Middleware,
-  Router,
-  send,
-} from "https://deno.land/x/oak/mod.ts";
+import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 import { readLines } from "https://deno.land/std@0.104.0/io/mod.ts";
 import * as conversion from "https://deno.land/std@0.152.0/streams/conversion.ts";
 import * as stdCopy from "https://deno.land/std@0.149.0/fs/copy.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
 
+Deno.env.set("LD_LIBRARY_PATH", ".");
+
+let backupPath: string = Deno.env.get("BACKUP_PATH") || "";
+console.log("Backup Path: ", backupPath);
+
 const app = new Application();
 const port = 3000;
-Deno.env.set("LD_LIBRARY_PATH", ".");
 const router = new Router();
 const encoder = new TextEncoder();
 
@@ -24,11 +23,9 @@ const FAILED = "FAILED";
 const ONE_MINUTE = 60 * 1000;
 let serverIdleMinutes = 0;
 
-let mcProcess: Deno.Process | null = null; //: Process<any>|null;
+let mcProcess: Deno.Process | null = null;
 let serverState = PROGRESS;
 let playerCount = 0;
-let backupPath: string = Deno.env.get("BACKUP_PATH") || "";
-console.log("Backup Path: ", backupPath);
 
 router
   .get("/status", (ctx) => {
@@ -125,18 +122,22 @@ const stopServer = async (offset?: number) => {
   }
 };
 
+const shutdownHost = () => {
+  Deno.run({ cmd: ["sudo", "shutdown", "-h", "now"] }).status();
+};
+
 const timer = (delayInMillis: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, delayInMillis);
   });
 
-const idleServerStop = async () => {
+const serverStopWatcher = async () => {
   while (true) {
     await timer(ONE_MINUTE);
     if (playerCount === 0) {
       if (++serverIdleMinutes === 30) {
         await stopServer();
-        // TODO shutdown
+        // shutdownHost();
       }
     } else {
       serverIdleMinutes = 0;
@@ -145,7 +146,7 @@ const idleServerStop = async () => {
 };
 
 startServer();
-idleServerStop();
+serverStopWatcher();
 
 app.use(async (ctx, next) => {
   console.log(`${ctx.request.method} ${ctx.request.url}`);
@@ -165,7 +166,7 @@ app.listen({ port });
 app.use(async (context, next) => {
   try {
     await context.send({
-      root: `${Deno.cwd()}/../frontend/public`,
+      root: `${Deno.cwd()}/cobblequarry`,
       index: "index.html",
     });
   } catch {
