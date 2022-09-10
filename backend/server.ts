@@ -14,7 +14,7 @@ let shutdownOnIdle: string = Deno.env.get("AUTO_SHUTDOWN") || "";
 console.log(
   shutdownOnIdle
     ? `Server (Computer) will shut down if no players for ${IDLE_SERVER_THRESHOLD_MINUTES} minutes. To avoid that, do not set 'AUTO_SHUTDOWN'.`
-    : "Server (Computer) is set to not automatically shutdown when there are no players. Provide 'AUTO_SHUTDOWN=yes' if you want that."
+    : "Server (Computer) is set to not automatically shutdown, if there are no players. Provide 'AUTO_SHUTDOWN=yes' if you want that."
 );
 
 const app = new Application();
