@@ -6,8 +6,16 @@ import { oakCors } from "https://deno.land/x/cors/mod.ts";
 
 Deno.env.set("LD_LIBRARY_PATH", ".");
 
+const IDLE_SERVER_THRESHOLD_MINUTES = 30;
+
 let backupPath: string = Deno.env.get("BACKUP_PATH") || "";
 console.log("Backup Path: ", backupPath);
+let shutdownOnIdle: string = Deno.env.get("AUTO_SHUTDOWN") || "";
+console.log(
+  shutdownOnIdle
+    ? `Server (Computer) will shut down if no players for ${IDLE_SERVER_THRESHOLD_MINUTES} minutes. To avoid that, do not set 'AUTO_SHUTDOWN'.`
+    : "Server (Computer) is set to not automatically shutdown when there are no players. Provide 'AUTO_SHUTDOWN=yes' if you want that."
+);
 
 const app = new Application();
 const port = 3000;
@@ -26,6 +34,7 @@ let serverIdleMinutes = 0;
 let mcProcess: Deno.Process | null = null;
 let serverState = PROGRESS;
 let playerCount = 0;
+let backupOnNextOccasion = false;
 
 router
   .get("/status", (ctx) => {
@@ -65,7 +74,7 @@ router
   .post("/backup", async () => {
     if (backupPath) {
       await stopServer(20);
-      await stdCopy.copy(Deno.cwd(), backupPath);
+      await backupServer();
       startServer();
     } else {
       console.log('No "BACKUP_PATH" environment variable given.');
@@ -86,6 +95,7 @@ const messageObserver = async (
       serverState = STARTED;
     } else if (line.includes(" Player connected: ")) {
       ++playerCount;
+      backupOnNextOccasion = true;
     } else if (line.includes(" Player disconnected: ")) {
       if (--playerCount === 0) {
       }
@@ -107,6 +117,10 @@ const startServer = async () => {
   messageObserver(mcProcess.stderr, Deno.stderr);
 };
 
+const backupServer = async () => {
+  await stdCopy.copy(Deno.cwd(), backupPath);
+};
+
 const stopServer = async (offset?: number) => {
   try {
     if (offset) {
@@ -117,8 +131,12 @@ const stopServer = async (offset?: number) => {
     }
     await mcProcess?.stdin?.write(encoder.encode("stop\n"));
     await mcProcess?.stdin?.close();
+    playerCount = 0;
+
+    if (backupOnNextOccasion) await backupServer();
+    backupOnNextOccasion = false;
   } catch {
-    console.log("closing the server failed");
+    console.log("Closing or backupping the server failed!");
   }
 };
 
@@ -131,13 +149,13 @@ const timer = (delayInMillis: number) =>
     setTimeout(resolve, delayInMillis);
   });
 
-const serverStopWatcher = async () => {
+const shutdownOnIdleWatcher = async () => {
   while (true) {
     await timer(ONE_MINUTE);
-    if (playerCount === 0) {
-      if (++serverIdleMinutes === 30) {
+    if (shutdownOnIdle && playerCount === 0) {
+      if (++serverIdleMinutes === IDLE_SERVER_THRESHOLD_MINUTES) {
         await stopServer();
-        // shutdownHost();
+        shutdownHost();
       }
     } else {
       serverIdleMinutes = 0;
@@ -146,7 +164,7 @@ const serverStopWatcher = async () => {
 };
 
 startServer();
-serverStopWatcher();
+shutdownOnIdleWatcher();
 
 app.use(async (ctx, next) => {
   console.log(`${ctx.request.method} ${ctx.request.url}`);
