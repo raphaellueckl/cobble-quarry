@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "mkdir -p public && cp index.html public/index.html && esbuild index.ts --bundle --outfile=public/index.js",
+    "serve": "mkdir -p public && cp index.html public/index.html && esbuild index.ts --watch --bundle --outfile=public/index.js",
     "start": "http-server",
     "test": "echo \"Error: no test specified\" && exit 1",
     "release": "npm run build && rm -rf ../release && mkdir ../release/ && mkdir ../release/cobblequarry && cp -R ./public/* ../release/cobblequarry && deno compile --output ../release/cobble --allow-env --allow-net --allow-read --allow-run ../backend/server.ts && cd ../release/ && zip -r ../cobblequarry.zip *"

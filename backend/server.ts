@@ -8,6 +8,8 @@ Deno.env.set("LD_LIBRARY_PATH", ".");
 
 const IDLE_SERVER_THRESHOLD_MINUTES = 30;
 
+const adminPW: string = Deno.env.get("ADMIN_PW") || "";
+const modPW: string = Deno.env.get("MOD_PW") || "";
 let backupPath: string = Deno.env.get("BACKUP_PATH") || "";
 console.log("Backup Path: ", backupPath);
 let shutdownOnIdle: string = Deno.env.get("AUTO_SHUTDOWN") || "";
@@ -36,21 +38,31 @@ let serverState = PROGRESS;
 let playerCount = 0;
 let backupOnNextOccasion = false;
 
+const isAuthenticatedAsAdmin = (ctx): boolean =>
+  !adminPW || ctx.request.headers.get("pw") === adminPW;
+
+const isAuthenticatedAsMod = (ctx): boolean =>
+  !modPW ||
+  ctx.request.headers.get("pw") === modPW ||
+  isAuthenticatedAsAdmin(ctx);
+
 router
   .get("/status", (ctx) => {
     ctx.response.body = { state: serverState };
   })
-  .get("/start", (ctx) => {
-    if (serverState === STOPPED) {
-      serverState = PROGRESS;
-      startServer();
-      ctx.response.body = { state: STARTED };
-      return;
+  .post("/start", (ctx) => {
+    if (isAuthenticatedAsMod(ctx)) {
+      if (serverState === STOPPED) {
+        serverState = PROGRESS;
+        startServer();
+        ctx.response.body = { state: STARTED };
+        return;
+      }
+      ctx.response.body = { state: "ALREADY_STARTED" };
     }
-    ctx.response.body = { state: "ALREADY_STARTED" };
   })
-  .get("/stop", async (ctx) => {
-    if (mcProcess !== null) {
+  .post("/stop", async (ctx) => {
+    if (isAuthenticatedAsMod(ctx) && mcProcess !== null) {
       serverState = PROGRESS;
       await stopServer(0);
       ctx.response.body = { serverState: STOPPED };
@@ -60,6 +72,7 @@ router
   })
   .post("/command", async (ctx) => {
     if (
+      isAuthenticatedAsAdmin(ctx) &&
       mcProcess !== null &&
       !(serverState === STOPPED || serverState === PROGRESS)
     ) {
@@ -72,7 +85,7 @@ router
     ctx.response.body = { state: FAILED };
   })
   .post("/backup", async () => {
-    if (backupPath) {
+    if (isAuthenticatedAsMod(ctx) && backupPath) {
       await stopServer(20);
       await backupServer();
       startServer();
