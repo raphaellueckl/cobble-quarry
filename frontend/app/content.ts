@@ -13,10 +13,16 @@ export class Content extends LitElement {
 
     .action-buttons {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
       margin: 8px;
       padding: 8px;
-      width: 200px;
+      width: 500px;
+    }
+
+    .action-buttons > button {
+      margin: 4px;
+      width: 150px;
+      height: 50px;
     }
   `;
 
