@@ -1,5 +1,5 @@
-import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { LitElement, html, css, PropertyValues } from "lit";
+import { customElement, state } from "lit/decorators.js";
 import { store, Events } from "./store";
 
 @customElement("cq-content")
@@ -10,6 +10,14 @@ export class Content extends LitElement {
       flex-direction: column;
     }
   `;
+
+  @state()
+  prefilledPW;
+
+  constructor() {
+    super();
+    this.prefilledPW = "";
+  }
 
   handlePWChange(ev) {
     store.dispatchEvent(
@@ -35,10 +43,19 @@ export class Content extends LitElement {
     );
   }
 
+  protected firstUpdated(_changedProperties: PropertyValues<any>): void {
+    this.prefilledPW = store.userPW;
+  }
+
   render() {
     return html`
       <div class="content">
-        <input class="pw" @change="${this.handlePWChange}" />
+        <input
+          class="pw"
+          type="password"
+          @change="${this.handlePWChange}"
+          .value="${this.prefilledPW}"
+        />
         <button class="button-start" @click="${this.handleStartServer}">
           Start Server
         </button>

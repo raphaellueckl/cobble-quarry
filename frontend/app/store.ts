@@ -29,20 +29,18 @@ const _pipeline = {
   },
 };
 
-let _userPW = "";
+const store = new Proxy(_store, _pipeline);
 
 const request = async (url: string) => {
   return await (
     await fetch(url, {
       method: "POST",
       headers: {
-        pw: _userPW,
+        pw: store.userPW,
       },
     })
   ).json();
 };
-
-const store = new Proxy(_store, _pipeline);
 
 store.addEventListener(Events.SIDENAV_STATE_CHANGE, ({ detail: change }) => {
   store.dispatchEvent(
@@ -51,7 +49,7 @@ store.addEventListener(Events.SIDENAV_STATE_CHANGE, ({ detail: change }) => {
 });
 
 store.addEventListener(Events.USER_PW_CHANGED, ({ detail: change }) => {
-  _userPW = change;
+  store.userPW = change;
 });
 
 store.addEventListener(Events.START_SERVER, () => {
