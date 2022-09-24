@@ -9,6 +9,9 @@ enum Events {
   UPDATED_LOGS = "UPDATED_LOGS",
 }
 
+const POST = "POST";
+const GET = "GET";
+
 // EventTarget, so that listeners can be registered on it
 // Element, as a workaround for safari
 const _store = new EventTarget() || Element.prototype;
@@ -35,10 +38,10 @@ let _logs = [];
 
 const store = new Proxy(_store, _pipeline);
 
-const request = async (url: string, body?: string) => {
+const request = async (url: string, method: string, body?: string) => {
   return await (
     await fetch(url, {
-      method: "POST",
+      method,
       headers: {
         pw: store.userPW,
       },
@@ -58,19 +61,19 @@ store.addEventListener(Events.USER_PW_CHANGED, ({ detail: change }) => {
 });
 
 store.addEventListener(Events.START_SERVER, () => {
-  request("/start");
+  request("/start", POST);
 });
 
 store.addEventListener(Events.STOP_SERVER, () => {
-  request("/stop");
+  request("/stop", POST);
 });
 
 store.addEventListener(Events.BACKUP_SERVER, () => {
-  request("/backup");
+  request("/backup", POST);
 });
 
 store.addEventListener(Events.EXECUTE_COMMAND, ({ detail }) => {
-  request("/command", detail);
+  request("/command", POST, detail);
 });
 
 const timer = (delayInMillis: number) =>
@@ -81,8 +84,8 @@ const timer = (delayInMillis: number) =>
 const fetchLogs = async () => {
   while (true) {
     await timer(1000);
-    const logs = await request("/logs");
-    store.dispatchEvent(Events.UPDATED_LOGS, { detail: logs });
+    const logs = await request("/logs", GET);
+    store.dispatchEvent(new CustomEvent(Events.UPDATED_LOGS, { detail: logs }));
   }
 };
 

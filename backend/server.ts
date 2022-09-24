@@ -44,6 +44,7 @@ let backupOnNextOccasion = false;
 let logQueue: String[] = [];
 
 const log = (content: string, isMCMessage = false) => {
+  if (content.includes("http") && content.includes("://")) return;
   logQueue.push(isMCMessage ? "[Minecraft] " : "[Cobble]    " + content);
   console.log(isMCMessage ? "[Minecraft] " : "[Cobble]    " + content);
 };
@@ -119,7 +120,7 @@ router
     }
   })
   .get("/logs", async (ctx) => {
-    ctx.response.body = { logs: logQueue };
+    ctx.response.body = logQueue;
   });
 
 const messageObserver = async (
