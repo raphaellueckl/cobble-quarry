@@ -8,11 +8,15 @@ export class Navbar extends LitElement {
     div {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       padding: 8px;
+      border-bottom: 2px solid black;
     }
 
-    .sidebar-activcator {
+    .sidebar-button {
       transform: rotate(90deg);
+      width: 40px;
+      height: 40px;
     }
   `;
 
@@ -29,9 +33,7 @@ export class Navbar extends LitElement {
     return html`
       <div>
         <h1>Cobble Quarry 🗿</h1>
-        <button class="sidebar-activcator" @click="${this.flipState}">
-          |||
-        </button>
+        <button class="sidebar-button" @click="${this.flipState}">|||</button>
       </div>
     `;
   }

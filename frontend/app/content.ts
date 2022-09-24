@@ -16,12 +16,12 @@ export class Content extends LitElement {
       flex-wrap: wrap;
       margin: 8px;
       padding: 8px;
-      width: 500px;
+      max-width: 500px;
     }
 
     .action-buttons > button {
       margin: 4px;
-      width: 150px;
+      width: 120px;
       height: 50px;
     }
   `;
