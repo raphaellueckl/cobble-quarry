@@ -51,7 +51,7 @@ const log = (content: string, isMCMessage = false) => {
 log("Backup Path: " + env_backupPath);
 log(
   env_shutdownOnIdle
-    ? `Server (Computer) will shut down if no players for ${IDLE_SERVER_MINUTES_THRESHOLD} minutes. To avoid that, do not set '${AUTO_SHUTDOWN}'.`
+    ? `Server (Computer) will shut down if no players for ${IDLE_SERVER_MINUTES_THRESHOLD} minutes. To avoid that, do not set '${AUTO_SHUTDOWN}'. If the minecraft server is "stopped" manually, the server will not shut down by itself.`
     : `Server (Computer) is set to not automatically shutdown, if there are no players. Provide '${AUTO_SHUTDOWN}=yes' if you want that.`
 );
 if (!env_adminPW)
@@ -195,7 +195,7 @@ const timer = (delayInMillis: number) =>
 const shutdownOnIdleWatcher = async () => {
   while (true) {
     await timer(ONE_MINUTE);
-    if (env_shutdownOnIdle && playerCount === 0) {
+    if (env_shutdownOnIdle && playerCount === 0 && serverState === STARTED) {
       if (++serverIdleMinutes === IDLE_SERVER_MINUTES_THRESHOLD) {
         await stopServer();
         shutdownHost();
