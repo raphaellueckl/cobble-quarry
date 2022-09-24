@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import "./navbar";
-import "./container";
+import "./app-container";
 
 @customElement("cq-app")
 export class CqApp extends LitElement {

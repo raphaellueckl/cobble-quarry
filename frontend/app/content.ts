@@ -8,6 +8,15 @@ export class Content extends LitElement {
     .content {
       display: flex;
       flex-direction: column;
+      margin: 8px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      margin: 8px;
+      padding: 8px;
+      width: 200px;
     }
   `;
 
@@ -50,21 +59,26 @@ export class Content extends LitElement {
   render() {
     return html`
       <div class="content">
-        <input
-          class="pw"
-          type="password"
-          @change="${this.handlePWChange}"
-          .value="${this.prefilledPW}"
-        />
-        <button class="button-start" @click="${this.handleStartServer}">
-          Start Server
-        </button>
-        <button class="button-stop" @click="${this.handleStopServer}">
-          Stop Server
-        </button>
-        <button class="button-backup" @click="${this.handleBackupServer}">
-          Backup Server
-        </button>
+        <label>
+          Password:
+          <input
+            class="pw"
+            type="password"
+            @change="${this.handlePWChange}"
+            .value="${this.prefilledPW}"
+          />
+        </label>
+        <div class="action-buttons">
+          <button class="button-start" @click="${this.handleStartServer}">
+            Start Server
+          </button>
+          <button class="button-stop" @click="${this.handleStopServer}">
+            Stop Server
+          </button>
+          <button class="button-backup" @click="${this.handleBackupServer}">
+            Backup Server
+          </button>
+        </div>
         <h2>Logs</h2>
         <textarea></textarea>
         <h2>Commands</h2>

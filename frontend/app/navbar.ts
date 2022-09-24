@@ -6,7 +6,9 @@ import { store, Events } from "./store";
 export class Navbar extends LitElement {
   static styles = css`
     div {
-      background-color: green;
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
     }
 
     .sidebar-activcator {
@@ -26,7 +28,7 @@ export class Navbar extends LitElement {
   render() {
     return html`
       <div>
-        Me is the navbar
+        <h1>Cobble Quarry 🗿</h1>
         <button class="sidebar-activcator" @click="${this.flipState}">
           |||
         </button>
