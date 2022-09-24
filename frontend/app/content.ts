@@ -24,14 +24,24 @@ export class Content extends LitElement {
       width: 120px;
       height: 50px;
     }
+
+    /* Reset UL */
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
   `;
 
   @state()
   prefilledPW;
+  @state()
+  logs: Array<string>;
 
   constructor() {
     super();
     this.prefilledPW = "";
+    this.logs = [];
   }
 
   handlePWChange(ev) {
@@ -67,6 +77,10 @@ export class Content extends LitElement {
 
   protected firstUpdated(_changedProperties: PropertyValues<any>): void {
     this.prefilledPW = store.userPW;
+
+    store.addEventListener(Events.UPDATED_LOGS, ({ detail }) => {
+      this.logs = detail;
+    });
   }
 
   render() {
@@ -93,7 +107,9 @@ export class Content extends LitElement {
           </button>
         </div>
         <h2>Logs</h2>
-        <textarea></textarea>
+        <ul class="logs">
+          ${this.logs.map((l) => html`<li>${l}</li>`)}
+        </ul>
         <h2>Commands</h2>
         <input class="command-input" @change="${this.handleCommand}" />
       </div>

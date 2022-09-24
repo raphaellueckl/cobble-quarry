@@ -117,6 +117,9 @@ router
     } else {
       log(`No '${BACKUP_PATH}' environment variable given or wrong password.`);
     }
+  })
+  .get("/logs", async (ctx) => {
+    ctx.response.body = { logs: logQueue };
   });
 
 const messageObserver = async (

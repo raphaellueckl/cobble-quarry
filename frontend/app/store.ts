@@ -6,6 +6,7 @@ enum Events {
   STOP_SERVER = "STOP_SERVER",
   BACKUP_SERVER = "BACKUP_SERVER",
   EXECUTE_COMMAND = "EXECUTE_COMMAND",
+  UPDATED_LOGS = "UPDATED_LOGS",
 }
 
 // EventTarget, so that listeners can be registered on it
@@ -30,9 +31,11 @@ const _pipeline = {
   },
 };
 
+let _logs = [];
+
 const store = new Proxy(_store, _pipeline);
 
-const request = async (url: string, body: string) => {
+const request = async (url: string, body?: string) => {
   return await (
     await fetch(url, {
       method: "POST",
@@ -69,5 +72,20 @@ store.addEventListener(Events.BACKUP_SERVER, () => {
 store.addEventListener(Events.EXECUTE_COMMAND, ({ detail }) => {
   request("/command", detail);
 });
+
+const timer = (delayInMillis: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, delayInMillis);
+  });
+
+const fetchLogs = async () => {
+  while (true) {
+    await timer(1000);
+    const logs = await request("/logs");
+    store.dispatchEvent(Events.UPDATED_LOGS, { detail: logs });
+  }
+};
+
+fetchLogs();
 
 export { store, Events };
