@@ -58,6 +58,13 @@ export class Content extends LitElement {
     );
   }
 
+  handleCommand(ev) {
+    store.dispatchEvent(
+      new CustomEvent(Events.EXECUTE_COMMAND, { detail: ev?.target?.value })
+    );
+    ev.target.value = "";
+  }
+
   protected firstUpdated(_changedProperties: PropertyValues<any>): void {
     this.prefilledPW = store.userPW;
   }
@@ -88,7 +95,7 @@ export class Content extends LitElement {
         <h2>Logs</h2>
         <textarea></textarea>
         <h2>Commands</h2>
-        <input />
+        <input class="command-input" @change="${this.handleCommand}" />
       </div>
     `;
   }

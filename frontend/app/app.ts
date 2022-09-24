@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import "./navbar";
 import "./app-container";
 
@@ -10,9 +10,6 @@ export class CqApp extends LitElement {
       color: green;
     }
   `;
-
-  @property()
-  mood = "great";
 
   render() {
     return html`

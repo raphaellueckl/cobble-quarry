@@ -5,6 +5,7 @@ enum Events {
   START_SERVER = "START_SERVER",
   STOP_SERVER = "STOP_SERVER",
   BACKUP_SERVER = "BACKUP_SERVER",
+  EXECUTE_COMMAND = "EXECUTE_COMMAND",
 }
 
 // EventTarget, so that listeners can be registered on it
@@ -31,13 +32,14 @@ const _pipeline = {
 
 const store = new Proxy(_store, _pipeline);
 
-const request = async (url: string) => {
+const request = async (url: string, body: string) => {
   return await (
     await fetch(url, {
       method: "POST",
       headers: {
         pw: store.userPW,
       },
+      body,
     })
   ).json();
 };
@@ -62,6 +64,10 @@ store.addEventListener(Events.STOP_SERVER, () => {
 
 store.addEventListener(Events.BACKUP_SERVER, () => {
   request("/backup");
+});
+
+store.addEventListener(Events.EXECUTE_COMMAND, ({ detail }) => {
+  request("/command", detail);
 });
 
 export { store, Events };

@@ -101,20 +101,21 @@ router
       mcProcess !== null &&
       !(serverState === STOPPED || serverState === PROGRESS)
     ) {
-      const command = await ctx.request.body().value;
-      log(`Executing: /${command}`);
+      let command = (await ctx.request.body().value).trim();
+      command = command.startsWith("/") ? command.substring(1) : command;
+      log(`Executing: ${command}`);
       await mcProcess?.stdin?.write(encoder.encode(command + "\n"));
       ctx.response.body = { state: SUCCESS };
       return;
     }
     ctx.response.body = { state: FAILED };
   })
-  .post("/backup-and-restart", async (ctx) => {
+  .post("/backup", async (ctx) => {
     if (isAuthenticatedAsMod(ctx) && env_backupPath) {
       await stopServer(20);
       startServer();
     } else {
-      log(`No '${BACKUP_PATH}' environment variable given.`);
+      log(`No '${BACKUP_PATH}' environment variable given or wrong password.`);
     }
   });
 
