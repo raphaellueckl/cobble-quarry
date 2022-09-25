@@ -9,20 +9,29 @@ export class Content extends LitElement {
       display: flex;
       flex-direction: column;
       margin: 8px;
+
+      font-family: "content-font";
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .section {
+      font-size: 36px;
+      margin: 12px 0;
     }
 
     .action-buttons {
       display: flex;
       flex-wrap: wrap;
-      margin: 8px;
-      padding: 8px;
       max-width: 500px;
     }
 
     .action-buttons > button {
-      margin: 4px;
+      margin: 2px 4px 2px 0;
       width: 120px;
       height: 50px;
+      font-family: "content-font";
+      font-size: 24px;
     }
 
     pre {
@@ -101,6 +110,7 @@ export class Content extends LitElement {
             .value="${this.prefilledPW}"
           />
         </label>
+        <h2 class="section">Actions</h2>
         <div class="action-buttons">
           <button class="button-start" @click="${this.handleStartServer}">
             Start Server
@@ -112,11 +122,11 @@ export class Content extends LitElement {
             Backup Server
           </button>
         </div>
-        <h2>Logs</h2>
+        <h2 class="section">Logs</h2>
         <ul class="logs">
           ${this.logs.map((l) => html`<li><pre>${l}</pre></li>`)}
         </ul>
-        <h2>Commands</h2>
+        <h2 class="section">Commands</h2>
         <input class="command-input" @change="${this.handleCommand}" />
       </div>
     `;

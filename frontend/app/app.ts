@@ -14,7 +14,7 @@ export class CqApp extends LitElement {
   render() {
     return html`
       <cq-navbar></cq-navbar>
-      <cq-container></cq-container>
+      <cq-app-container></cq-app-container>
     `;
   }
 }

@@ -4,11 +4,15 @@ import { store, Events } from "./store";
 import "./content";
 import "./sidebar";
 
-@customElement("cq-container")
+@customElement("cq-app-container")
 export class Container extends LitElement {
   static styles = css`
     div {
       display: flex;
+      margin: 40px;
+      padding: 20px;
+      background: rgba(244, 164, 96, 0.6);
+      border-radius: 20px;
     }
 
     cq-content {
