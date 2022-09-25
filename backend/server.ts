@@ -3,6 +3,7 @@ import { readLines } from "https://deno.land/std@0.104.0/io/mod.ts";
 import * as conversion from "https://deno.land/std@0.152.0/streams/conversion.ts";
 import * as stdCopy from "https://deno.land/std@0.149.0/fs/copy.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
+import { compress } from "https://deno.land/x/zip@v1.2.4/mod.ts";
 
 Deno.env.set("LD_LIBRARY_PATH", ".");
 
@@ -52,7 +53,7 @@ const log = (content: string, isMCMessage = false) => {
 log("Backup Path: " + env_backupPath);
 log(
   env_shutdownOnIdle
-    ? `Server (Computer) will shut down if no players for ${IDLE_SERVER_MINUTES_THRESHOLD} minutes. To avoid that, do not set '${AUTO_SHUTDOWN}'. If the minecraft server is "stopped" manually, the server will not shut down by itself.`
+    ? `Server (Computer) will shut down if no players for ${IDLE_SERVER_MINUTES_THRESHOLD} minutes. To avoid that, do not set '${AUTO_SHUTDOWN}'. If the minecraft server is "stopped" manually, the server (host machine) will not shut down by itself.`
     : `Server (Computer) is set to not automatically shutdown, if there are no players. Provide '${AUTO_SHUTDOWN}=yes' if you want that.`
 );
 if (!env_adminPW)
@@ -161,7 +162,12 @@ const startServer = async () => {
 
 const backupServer = async () => {
   if (backupOnNextOccasion) {
-    await stdCopy.copy(Deno.cwd(), env_backupPath + new Date().toISOString());
+    const backupPath = env_backupPath + new Date().toISOString();
+    await stdCopy.copy(Deno.cwd(), backupPath);
+    await Deno.remove(backupPath + "/cobble");
+    await Deno.remove(backupPath + "/cobblequarry", { recursive: true });
+    await compress(backupPath, `${backupPath}.zip`);
+    await Deno.remove(backupPath, { recursive: true });
     backupOnNextOccasion = false;
   } else {
     log("No backup was made due to no player having joined since last backup.");
