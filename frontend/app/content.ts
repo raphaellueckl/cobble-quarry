@@ -25,6 +25,12 @@ export class Content extends LitElement {
       height: 50px;
     }
 
+    pre {
+      margin-top: 0;
+      margin-bottom: 4px;
+      white-space: pre-wrap;
+    }
+
     /* Reset UL */
     ul {
       list-style: none;
@@ -108,7 +114,7 @@ export class Content extends LitElement {
         </div>
         <h2>Logs</h2>
         <ul class="logs">
-          ${this.logs.map((l) => html`<li>${l}</li>`)}
+          ${this.logs.map((l) => html`<li><pre>${l}</pre></li>`)}
         </ul>
         <h2>Commands</h2>
         <input class="command-input" @change="${this.handleCommand}" />
