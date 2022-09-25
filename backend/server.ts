@@ -46,8 +46,9 @@ let logQueue: String[] = [];
 
 const log = (content: string, isMCMessage = false) => {
   if (content.includes("http") && content.includes("://")) return;
-  logQueue.push(isMCMessage ? "[Minecraft] " : "[Cobble]    " + content);
-  console.log(isMCMessage ? "[Minecraft] " : "[Cobble]    " + content);
+  const msg = (isMCMessage ? "[Minecraft] " : "[Cobble]    ") + content;
+  logQueue.push(msg);
+  console.log(msg);
 };
 
 log("Backup Path: " + env_backupPath);
