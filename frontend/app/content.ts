@@ -40,11 +40,20 @@ export class Content extends LitElement {
       white-space: pre-wrap;
     }
 
+    .logs {
+      border: 1px solid black;
+      border-radius: 12px;
+    }
+
     /* Reset UL */
     ul {
       list-style: none;
-      padding: 0;
+      padding: 6px;
       margin: 0;
+
+      height: 500px;
+      overflow: auto;
+      font-size: 14px;
     }
   `;
 
@@ -124,7 +133,9 @@ export class Content extends LitElement {
         </div>
         <h2 class="section">Logs</h2>
         <ul class="logs">
-          ${this.logs.map((l) => html`<li><pre>${l}</pre></li>`)}
+          ${this.logs.length
+            ? this.logs.map((l) => html`<li><pre>${l}</pre></li>`)
+            : html`<li><pre>Loading Logs...</pre></li>`}
         </ul>
         <h2 class="section">Commands</h2>
         <input class="command-input" @change="${this.handleCommand}" />
