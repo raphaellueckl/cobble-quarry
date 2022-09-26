@@ -93,6 +93,7 @@ export class Content extends LitElement {
   }
 
   handleCommand(ev) {
+    if (ev.key !== "Enter") return;
     store.dispatchEvent(
       new CustomEvent(Events.EXECUTE_COMMAND, { detail: ev?.target?.value })
     );
@@ -137,8 +138,8 @@ export class Content extends LitElement {
             ? this.logs.map((l) => html`<li><pre>${l}</pre></li>`)
             : html`<li><pre>Loading Logs...</pre></li>`}
         </ul>
-        <h2 class="section">Commands</h2>
-        <input class="command-input" @change="${this.handleCommand}" />
+        <h2 class="section">Commands (ENTER to send)</h2>
+        <input class="command-input" @keyup="${this.handleCommand}" />
       </div>
     `;
   }

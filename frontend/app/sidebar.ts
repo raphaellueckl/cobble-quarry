@@ -15,6 +15,6 @@ export class Sidebar extends LitElement {
   }
 
   render() {
-    return html` <div>Me the sidebar</div> `;
+    return html` <div>Yet unused sidebar (._. )'</div> `;
   }
 }
