@@ -7,6 +7,7 @@ enum Events {
   BACKUP_SERVER = "BACKUP_SERVER",
   EXECUTE_COMMAND = "EXECUTE_COMMAND",
   UPDATED_LOGS = "UPDATED_LOGS",
+  UPDATED_SERVER_STATE = "UPDATED_SERVER_STATE",
 }
 
 const POST = "POST";
@@ -33,8 +34,6 @@ const _pipeline = {
     // return property;
   },
 };
-
-let _logs = [];
 
 const store = new Proxy(_store, _pipeline);
 
@@ -84,8 +83,23 @@ const timer = (delayInMillis: number) =>
 const fetchLogs = async () => {
   while (true) {
     await timer(1000);
-    const logs = await request("/logs", GET);
-    store.dispatchEvent(new CustomEvent(Events.UPDATED_LOGS, { detail: logs }));
+    try {
+      const { status, logs } = await request("/status-and-logs", GET);
+      store.dispatchEvent(
+        new CustomEvent(Events.UPDATED_LOGS, { detail: logs })
+      );
+      store.dispatchEvent(
+        new CustomEvent(Events.UPDATED_SERVER_STATE, {
+          detail: status === "STARTED",
+        })
+      );
+    } catch (e) {
+      store.dispatchEvent(
+        new CustomEvent(Events.UPDATED_SERVER_STATE, {
+          detail: false,
+        })
+      );
+    }
   }
 };
 

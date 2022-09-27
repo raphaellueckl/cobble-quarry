@@ -29,7 +29,6 @@ const encoder = new TextEncoder();
 
 const STARTED = "STARTED";
 const STOPPED = "STOPPED";
-const PROGRESS = "PROGRESS";
 const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
 
@@ -38,7 +37,7 @@ const ONE_MINUTE = 60 * 1000;
 let serverIdleMinutes = 0;
 
 let mcProcess: Deno.Process | null = null;
-let serverState = PROGRESS;
+let serverState = STOPPED;
 let playerCount = 0;
 let backupOnNextOccasion = false;
 
@@ -75,13 +74,12 @@ const isAuthenticatedAsMod = (ctx: any): boolean =>
   isAuthenticatedAsAdmin(ctx);
 
 router
-  .get("/status", (ctx) => {
-    ctx.response.body = { state: serverState };
+  .get("/status-and-logs", (ctx) => {
+    ctx.response.body = { status: serverState, logs: logQueue };
   })
   .post("/start", (ctx) => {
     if (isAuthenticatedAsMod(ctx)) {
       if (serverState === STOPPED) {
-        serverState = PROGRESS;
         startServer();
         ctx.response.body = { state: STARTED };
         return;
@@ -91,7 +89,6 @@ router
   })
   .post("/stop", async (ctx) => {
     if (isAuthenticatedAsMod(ctx) && mcProcess !== null) {
-      serverState = PROGRESS;
       await stopServer(0);
       ctx.response.body = { serverState: STOPPED };
       return;
@@ -102,7 +99,7 @@ router
     if (
       isAuthenticatedAsAdmin(ctx) &&
       mcProcess !== null &&
-      !(serverState === STOPPED || serverState === PROGRESS)
+      !(serverState === STOPPED)
     ) {
       let command = (await ctx.request.body().value).trim();
       command = command.startsWith("/") ? command.substring(1) : command;
@@ -120,9 +117,6 @@ router
     } else {
       log(`No '${BACKUP_PATH}' environment variable given or wrong password.`);
     }
-  })
-  .get("/logs", async (ctx) => {
-    ctx.response.body = logQueue;
   });
 
 const messageObserver = async (
