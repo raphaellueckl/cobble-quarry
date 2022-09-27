@@ -7,7 +7,13 @@ import "./sidebar";
 @customElement("cq-app-container")
 export class Container extends LitElement {
   static styles = css`
-    div {
+    .app-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    .max-size-container {
+      width: 1500px;
       display: flex;
       margin: 40px;
       padding: 20px;
@@ -41,9 +47,12 @@ export class Container extends LitElement {
 
   render() {
     return html`
-      <div>
-        <cq-content class="${!this.sidebarOpen ? "open" : ""}"></cq-content>
-        <cq-sidebar class="${this.sidebarOpen ? "open" : ""}"></cq-sidebar>
+      <div class="app-wrapper">
+        <div class="max-size-container">
+          <cq-content class="${!this.sidebarOpen ? "open" : ""}"></cq-content>
+          <cq-sidebar class="${this.sidebarOpen ? "open" : ""}"></cq-sidebar>
+        </div>
+        <div></div>
       </div>
     `;
   }
