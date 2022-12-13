@@ -1,3 +1,5 @@
+import { LOGS_MOCK } from "./mocks";
+
 enum Events {
   SIDENAV_STATE_CHANGE = "SIDENAV_STATE_CHANGE",
   SIDENAV_STATE_CHANGED = "SIDENAV_STATE_CHANGED",
@@ -98,6 +100,9 @@ const fetchLogs = async () => {
         new CustomEvent(Events.UPDATED_SERVER_STATE, {
           detail: false,
         })
+      );
+      store.dispatchEvent(
+        new CustomEvent(Events.UPDATED_LOGS, { detail: LOGS_MOCK.reverse() })
       );
     }
   }

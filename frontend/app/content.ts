@@ -132,14 +132,14 @@ export class Content extends LitElement {
             Backup Server
           </button>
         </div>
+        <h2 class="section">Commands (ENTER to send)</h2>
+        <input class="command-input" @keyup="${this.handleCommand}" />
         <h2 class="section">Logs</h2>
         <ul class="logs">
           ${this.logs.length
             ? this.logs.map((l) => html`<li><pre>${l}</pre></li>`)
             : html`<li><pre>Loading Logs...</pre></li>`}
         </ul>
-        <h2 class="section">Commands (ENTER to send)</h2>
-        <input class="command-input" @keyup="${this.handleCommand}" />
       </div>
     `;
   }
