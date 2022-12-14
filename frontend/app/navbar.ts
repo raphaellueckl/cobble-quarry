@@ -44,10 +44,10 @@ export class Navbar extends LitElement {
 
       display: block;
       margin-left: ${unsafeCSS(ITEM_MARGIN)};
-      width: 40px;
-      min-width: 40px;
-      height: 40px;
-      padding: 12px;
+      width: 32px;
+      min-width: 32px;
+      height: 32px;
+      padding: 8px;
 
       border: 2px solid #d0c5c0;
       /* color: #d0c5c0; */
@@ -73,13 +73,13 @@ export class Navbar extends LitElement {
       justify-content: space-between;
       /* align-items: center; */
       overflow: hidden;
-      height: 40px;
+      height: 32px;
       transform: rotate(-90deg);
     }
 
     .burger-line {
       border: 2px solid #d0c5c0;
-      height: 48.49px;
+      height: 37.49px;
       /* margin: 2px; */
       transform: rotate(0);
       transition: transform 0.2s;
@@ -94,7 +94,7 @@ export class Navbar extends LitElement {
     }
 
     .line-2 {
-      height: 40px;
+      height: 28px;
       transform: scaleY(1);
     }
 
