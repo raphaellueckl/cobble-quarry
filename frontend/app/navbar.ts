@@ -97,7 +97,7 @@ export class Navbar extends LitElement {
     .online-status-badge {
       height: 30px;
       image-rendering: pixelated;
-      animation: 8s linear 0s 1;
+      animation: 0.8s linear 0s 1;
       animation-name: epicEntry;
     }
 
@@ -109,13 +109,13 @@ export class Navbar extends LitElement {
         transform: translateZ(0) scale(1, 1);
       }
       40% {
-        transform: rotate(30deg) scale(1.5, 1.5);
+        transform: rotate(-30deg) scale(1.5, 1.5);
       }
       60% {
-        transform: rotate(-20deg) scale(1, 1);
+        transform: rotate(20deg) scale(1, 1);
       }
       80% {
-        transform: rotate(5deg) scale(1.2, 1.2);
+        transform: rotate(-5deg) scale(1.2, 1.2);
       }
       100% {
         transform: rotate(0) scale(1, 1);
