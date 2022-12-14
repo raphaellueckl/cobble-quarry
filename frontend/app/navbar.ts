@@ -42,11 +42,15 @@ export class Navbar extends LitElement {
     .sidebar-button {
       all: unset;
 
+      display: block;
       margin-left: ${unsafeCSS(ITEM_MARGIN)};
       width: 40px;
       min-width: 40px;
       height: 40px;
-      padding: 8px;
+      padding: 12px;
+
+      border: 2px solid #d0c5c0;
+      /* color: #d0c5c0; */
       /* position: relative; */
       /* transform: rotate(90deg); */
     }
@@ -62,26 +66,48 @@ export class Navbar extends LitElement {
     } */
 
     .sidebar-button {
+    }
+
+    .burger {
       display: flex;
       justify-content: space-between;
+      /* align-items: center; */
+      overflow: hidden;
+      height: 40px;
+      transform: rotate(-90deg);
     }
 
     .burger-line {
-      border: 2px solid red;
+      border: 2px solid #d0c5c0;
+      height: 48.49px;
       /* margin: 2px; */
+      transform: rotate(0);
+      transition: transform 0.2s;
     }
 
-    .sidebar-button.open .line-1 {
-      transform: rotate(-45deg);
+    .line-1 {
       transform-origin: top left;
     }
 
+    .sidebar-button.open .line-1 {
+      transform: rotate(-45deg) translateY(2px) translateX(-2px);
+    }
+
+    .line-2 {
+      height: 40px;
+      transform: scaleY(1);
+    }
+
     .sidebar-button.open .line-2 {
-      transform: rotate(45deg);
+      transform: scaleY(0);
+    }
+
+    .line-3 {
+      transform-origin: top right;
     }
 
     .sidebar-button.open .line-3 {
-      transform: rotate(45deg);
+      transform: rotate(45deg) translateY(2px) translateX(2px);
       transform-origin: top right;
     }
 
@@ -132,9 +158,11 @@ export class Navbar extends LitElement {
             class="sidebar-button ${this.open ? "open" : ""}"
             @click="${this.flipState}"
           >
-            <span class="burger-line line-1"></span>
-            <span class="burger-line line-2"></span>
-            <span class="burger-line line-3"></span>
+            <div class="burger">
+              <span class="burger-line line-1"></span>
+              <span class="burger-line line-2"></span>
+              <span class="burger-line line-3"></span>
+            </div>
           </button>
         </div>
       </div>
