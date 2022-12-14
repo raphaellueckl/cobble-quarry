@@ -50,28 +50,11 @@ export class Navbar extends LitElement {
       padding: 8px;
 
       border: 2px solid #d0c5c0;
-      /* color: #d0c5c0; */
-      /* position: relative; */
-      /* transform: rotate(90deg); */
-    }
-
-    /* .sidebar-button:before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: yellow;
-    } */
-
-    .sidebar-button {
     }
 
     .burger {
       display: flex;
       justify-content: space-between;
-      /* align-items: center; */
       overflow: hidden;
       height: 32px;
       transform: rotate(-90deg);
@@ -80,7 +63,6 @@ export class Navbar extends LitElement {
     .burger-line {
       border: 2px solid #d0c5c0;
       height: 37.49px;
-      /* margin: 2px; */
       transform: rotate(0);
       transition: transform 0.2s;
     }
@@ -118,9 +100,9 @@ export class Navbar extends LitElement {
   `;
 
   @state()
-  online: boolean = null;
+  online = null;
   @state()
-  private open: boolean = true;
+  open = false;
 
   flipState() {
     this.open = !this.open;
