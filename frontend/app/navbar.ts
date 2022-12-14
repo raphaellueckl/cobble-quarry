@@ -71,7 +71,18 @@ export class Navbar extends LitElement {
       /* margin: 2px; */
     }
 
-    .line-1 {
+    .sidebar-button.open .line-1 {
+      transform: rotate(-45deg);
+      transform-origin: top left;
+    }
+
+    .sidebar-button.open .line-2 {
+      transform: rotate(45deg);
+    }
+
+    .sidebar-button.open .line-3 {
+      transform: rotate(45deg);
+      transform-origin: top right;
     }
 
     .online-badge {
@@ -83,7 +94,7 @@ export class Navbar extends LitElement {
   @state()
   online: boolean = null;
   @state()
-  private open: boolean = false;
+  private open: boolean = true;
 
   flipState() {
     this.open = !this.open;
