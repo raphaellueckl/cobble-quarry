@@ -84,7 +84,7 @@ const timer = (delayInMillis: number) =>
 
 const fetchLogs = async () => {
   while (true) {
-    await timer(1000);
+    await timer(2000);
     try {
       const { status, logs } = await request("/status-and-logs", GET);
       store.dispatchEvent(
@@ -98,7 +98,7 @@ const fetchLogs = async () => {
     } catch (e) {
       store.dispatchEvent(
         new CustomEvent(Events.UPDATED_SERVER_STATE, {
-          detail: false,
+          detail: false, // For presentation: Math.random() * 2 > 1,
         })
       );
       store.dispatchEvent(
