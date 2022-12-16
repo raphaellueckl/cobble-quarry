@@ -1,5 +1,5 @@
 import { LitElement, html, css, PropertyValues } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement, query, state } from "lit/decorators.js";
 import { store, Events } from "./store";
 
 @customElement("cq-content")
@@ -55,12 +55,29 @@ export class Content extends LitElement {
       overflow: auto;
       font-size: 14px;
     }
+
+    .run-away {
+      animation: flee 3s linear 0s 1;
+    }
+
+    @keyframes flee {
+      30% {
+        transform: rotate(180deg);
+        transform-origin: 500px 500px;
+      }
+      100% {
+        transform: rotate(4320deg);
+      }
+    }
   `;
 
   @state()
   prefilledPW;
   @state()
   logs: Array<string>;
+
+  @query("#password")
+  passwordInput;
 
   constructor() {
     super();
@@ -92,6 +109,16 @@ export class Content extends LitElement {
     );
   }
 
+  handleMouseOver(ev) {
+    if (!this.passwordInput.value) {
+      const elem = ev.target;
+      ev.target.classList.add("run-away");
+      setTimeout(() => {
+        elem.classList.remove("run-away");
+      }, 3100);
+    }
+  }
+
   handleCommand(ev) {
     if (ev.key !== "Enter") return;
     store.dispatchEvent(
@@ -114,6 +141,7 @@ export class Content extends LitElement {
         <label>
           Password:
           <input
+            id="password"
             class="pw"
             type="password"
             @change="${this.handlePWChange}"
@@ -122,13 +150,25 @@ export class Content extends LitElement {
         </label>
         <h2 class="section">Actions</h2>
         <div class="action-buttons">
-          <button class="button-start" @click="${this.handleStartServer}">
+          <button
+            class="button-start"
+            @click="${this.handleStartServer}"
+            @mouseover="${this.handleMouseOver}"
+          >
             Start Server
           </button>
-          <button class="button-stop" @click="${this.handleStopServer}">
+          <button
+            class="button-stop"
+            @click="${this.handleStopServer}"
+            @mouseover="${this.handleMouseOver}"
+          >
             Stop Server
           </button>
-          <button class="button-backup" @click="${this.handleBackupServer}">
+          <button
+            class="button-backup"
+            @click="${this.handleBackupServer}"
+            @mouseover="${this.handleMouseOver}"
+          >
             Backup Server
           </button>
         </div>
