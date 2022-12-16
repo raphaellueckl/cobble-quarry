@@ -37,6 +37,18 @@
         background-attachment: scroll;
 
         backdrop-filter: blur(3px) saturate(120%);
+        background-position: bottom left;
+        animation: movingBackground 240s linear infinite alternate;
+      }
+
+      @keyframes movingBackground {
+        from {
+          background-position: bottom left;
+        }
+
+        to {
+          background-position: bottom right;
+        }
       }
     </style>
   </head>
