@@ -101,9 +101,18 @@ const fetchLogs = async () => {
           detail: false, // For presentation: Math.random() * 2 > 1,
         })
       );
-      store.dispatchEvent(
-        new CustomEvent(Events.UPDATED_LOGS, { detail: LOGS_MOCK.reverse() })
-      );
+      // Dev-mode
+      if (location.hash.includes("/mock")) {
+        store.dispatchEvent(
+          new CustomEvent(Events.UPDATED_LOGS, { detail: LOGS_MOCK.reverse() })
+        );
+      } else {
+        store.dispatchEvent(
+          new CustomEvent(Events.UPDATED_LOGS, {
+            detail: ["Server is not reachable! This will "],
+          })
+        );
+      }
     }
   }
 };
