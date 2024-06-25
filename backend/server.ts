@@ -4,6 +4,10 @@ import * as conversion from "https://deno.land/std@0.152.0/streams/conversion.ts
 import * as stdCopy from "https://deno.land/std@0.149.0/fs/copy.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
 import { compress } from "https://deno.land/x/zip@v1.2.4/mod.ts";
+import { ensureDir } from "https://deno.land/std/fs/mod.ts";
+import { copy } from "https://deno.land/std/fs/copy.ts";
+import { join } from "https://deno.land/std@0.114.0/path/mod.ts";
+import { decompress } from "https://deno.land/x/zip@v1.2.5/decompress.ts";
 
 Deno.env.set("LD_LIBRARY_PATH", ".");
 
@@ -11,11 +15,14 @@ const ADMIN_PW = "ADMIN_PW";
 const MOD_PW = "MOD_PW";
 const BACKUP_PATH = "BACKUP_PATH";
 const AUTO_SHUTDOWN = "AUTO_SHUTDOWN";
+const ZIP_FILE_PATH = "./bedrock-server.zip";
+const EXTRACT_DIR = "../bedrock-server";
+const MINECRAFT_SERVER_DIR = "./";
 
 const env_adminPW: string = Deno.env.get(ADMIN_PW) || "";
 const env_modPW: string = Deno.env.get(MOD_PW) || "";
+const env_shutdownOnIdle: string = Deno.env.get(AUTO_SHUTDOWN) || ""; // y
 let env_backupPath: string = Deno.env.get(BACKUP_PATH) || ""; // /home/username/minecraft
-let env_shutdownOnIdle: string = Deno.env.get(AUTO_SHUTDOWN) || ""; // y
 
 // Fix lazy user input
 if (env_backupPath && env_backupPath[env_backupPath.length - 1] !== "/") {
@@ -89,7 +96,7 @@ router
   })
   .post("/stop", async (ctx) => {
     if (isAuthenticatedAsMod(ctx) && mcProcess !== null) {
-      await stopServer(0);
+      await stopAndBackupServer(0);
       ctx.response.body = { serverState: STOPPED };
       return;
     }
@@ -112,12 +119,35 @@ router
   })
   .post("/backup", async (ctx) => {
     if (isAuthenticatedAsMod(ctx) && env_backupPath) {
-      await stopServer(20);
-      startServer();
+      await startBackupProcedure();
+    } else {
+      log(`No '${BACKUP_PATH}' environment variable given or wrong password.`);
+    }
+  })
+  .post("/update", async (ctx) => {
+    if (isAuthenticatedAsMod(ctx)) {
+      await startServerUpdateProcedure();
     } else {
       log(`No '${BACKUP_PATH}' environment variable given or wrong password.`);
     }
   });
+
+const startBackupProcedure = async () => {
+  await stopAndBackupServer(
+    20,
+    "Starting minecraft backup. Restart in approximately one minute."
+  );
+  startServer();
+};
+
+const startServerUpdateProcedure = async () => {
+  await stopAndBackupServer(
+    20,
+    "Starting server update. Restart in approximately one minute."
+  );
+  await updateServer();
+  startServer();
+};
 
 const messageObserver = async (
   reader: Deno.Reader | null,
@@ -169,9 +199,77 @@ const backupServer = async () => {
   }
 };
 
-const stopServer = async (offset?: number) => {
+const mergeDirectoriesAndOverwriteExisting = async (
+  source: string,
+  target: string
+) => {
+  await ensureDir(target);
+
+  for await (const entry of Deno.readDir(source)) {
+    const sourcePath = `${source}/${entry.name}`;
+    const targetPath = `${target}/${entry.name}`;
+
+    if (entry.isDirectory) {
+      await mergeDirectoriesAndOverwriteExisting(sourcePath, targetPath);
+    } else {
+      await copy(sourcePath, targetPath, { overwrite: true });
+    }
+  }
+};
+
+const updateServer = async () => {
+  try {
+    const urlToCrawlNewestVersionNumber =
+      "https://www.minecraft.net/en-us/download/server/bedrock";
+
+    const html = await (await fetch(urlToCrawlNewestVersionNumber)).text();
+
+    const versionNumberRegex =
+      /<a href="https:\/\/minecraft\.azureedge\.net\/bin\-linux\/bedrock\-server\-(.*?)\.zip"/;
+    const version = html.match(versionNumberRegex)?.[1];
+
+    if (version) {
+      log(`New bedrock server version is: ${version}`);
+
+      const bedrockZipDownloadUrl = `https://minecraft.azureedge.net/bin-linux/bedrock-server-${version}.zip`;
+
+      const bedrockZipDownload = await fetch(bedrockZipDownloadUrl);
+      const bedrockZipFile = await Deno.open(ZIP_FILE_PATH, {
+        create: true,
+        write: true,
+      });
+      await bedrockZipDownload.body?.pipeTo(bedrockZipFile.writable);
+      // file.close();
+
+      await ensureDir(EXTRACT_DIR);
+      await decompress(ZIP_FILE_PATH, EXTRACT_DIR);
+      await Deno.remove(ZIP_FILE_PATH);
+
+      // Remove files from downloaded server, that should not be taken over.
+      const filesToExcludeFromMerge = ["allowlist.json", "server.properties"];
+      for (const fileName of filesToExcludeFromMerge) {
+        const filePath = join(EXTRACT_DIR, fileName);
+        await Deno.remove(filePath);
+      }
+
+      await mergeDirectoriesAndOverwriteExisting(
+        EXTRACT_DIR,
+        MINECRAFT_SERVER_DIR
+      );
+
+      log("Minecraft update completed!");
+    } else {
+      log("No version information found in crawled HTML.");
+    }
+  } catch {
+    log("Updating server failed!");
+  }
+};
+
+const stopAndBackupServer = async (offset?: number, msg?: string) => {
   try {
     if (offset) {
+      if (msg) await mcProcess?.stdin?.write(encoder.encode(msg));
       for (let i = offset; i > 0; i--) {
         log(`Server stop in ${i}`);
         await mcProcess?.stdin?.write(encoder.encode(`Server stop in ${i}\n`));
@@ -203,7 +301,7 @@ const shutdownOnIdleWatcher = async () => {
     await timer(ONE_MINUTE);
     if (env_shutdownOnIdle && playerCount === 0 && serverState === STARTED) {
       if (++serverIdleMinutes === IDLE_SERVER_MINUTES_THRESHOLD) {
-        await stopServer();
+        await stopAndBackupServer();
         shutdownHost();
       }
     } else {
