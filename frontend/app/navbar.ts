@@ -2,8 +2,6 @@ import { LitElement, html, css, PropertyValues, unsafeCSS } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { store, Events } from "./store";
 
-const ITEM_MARGIN = "18px;";
-
 @customElement("cq-navbar")
 export class Navbar extends LitElement {
   static styles = css`
@@ -19,7 +17,7 @@ export class Navbar extends LitElement {
       align-items: center;
       max-width: 1500px;
       width: 100%;
-      padding: 0 68px;
+      padding: 12px 40px;
       color: #d0c5c0;
       font-family: "title-font";
       font-size: 24px;
@@ -27,24 +25,34 @@ export class Navbar extends LitElement {
 
     .title-wrapper {
       display: flex;
+      flex-wrap: wrap;
+      justify-content: left;
       align-items: center;
       perspective: 500px;
     }
 
+    .title-wrapper > * {
+      margin: 8px;
+    }
+
     .title {
-      margin-right: ${unsafeCSS(ITEM_MARGIN)};
+      margin-right: 18px;
     }
 
     .logo {
       height: 72px;
-      margin-right: ${unsafeCSS(ITEM_MARGIN)};
+      margin-right: 18px;
+    }
+
+    .icon-wrapper {
+      display: flex;
+      align-items: center;
     }
 
     .sidebar-button {
       all: unset;
 
       display: block;
-      margin-left: ${unsafeCSS(ITEM_MARGIN)};
       width: 32px;
       min-width: 32px;
       height: 32px;
@@ -147,18 +155,20 @@ export class Navbar extends LitElement {
         <div class="navbar-content-wrapper">
           <div class="title-wrapper">
             <h1 class="title">Cobble Quarry</h1>
-            <img src="favicon.png" class="logo" />
-            ${this.online === null
-              ? ""
-              : this.online
-              ? html`<img
-                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAALCAYAAAAa5F88AAAAAXNSR0IArs4c6QAAAaZJREFUOE9lVNkVwjAMk0Yq7D8CzUjiyVcT4ANC4kOWZRP9WdCcRZCCQEDxHY/Mv4gL/2gOcc+yVBmShMYh40TIsQRwZZCMdEN8gZ1yHDppQ2Qmz2shQgx8w6gXau53kzwXeNv6eFMGQ4PAq17HazhI46iqP4GmKNqBVFm76eGVMZ/nBB7/F0UuSNfG1aosvvP1kmSgLuCG9Aa7ii1Pstr436BcYMf9UHiJThg+juXWz7vJtTYqaZ4zns8GQFNn5AbTwR2wehtw3S6b7cnDrzTgs4EM+9meZsQ5yEVpT35Zk4SWAmAzZrsAZNCmMsCPWlLIn24zgfY3i3408GbbTF8BPTXheInSuQVUoGEkklbwbo1ZMnhX2DR3bQGwEkSBBbZYHxlUT0eSwchdQVvMBhaUloCnDVVltesZKMHshCZ63LoNV/CEZj2KCjmWVHaN/KI8BDgbZNshPfR/01H1bfOa4i39bCtgRqf0ZYDPZFgPsbDO8Tyn9z/Zs4z+J/pYM/v49w4xPz0UU3SpfLbnM2fP0jpQRQ2Vfd8OvX3PyfhpSvkSuUiFL3ZrKsLW2tptAAAAAElFTkSuQmCC"
-                  class="online-status-badge"
-                />`
-              : html`<img
-                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAALCAYAAAD8zZR4AAAAAXNSR0IArs4c6QAAAfZJREFUOE+FVYGRwyAMs4cIDJJ0/wGaDAIZwn+SICFN2u/1jtYYW5aMccPHzdYph3uY4etu+Ik/4VjcnCu9udDXHB7m4RYeCGMR2IPdzAO7iq+DijPueY+h08y9lMITzPlOKZa661gDcyBpsTvI0d5SPi9DMXK4Gm7bQ5Qt55hLcd9SjrkK6bcs5OcGegzf67/DeAbx4N8cuz9wCdxepIOZbTkFpHnVSuHwn4pAEgtbavV3zk1/STiX6lueAutY4Jp0Fsa57r6mKXAeFuwttfiaFEug3GDrOJxOeyU4OGrTrSfbUoqZAc/PQfvRhm5bmm5+jDPYQQQgAOgYH4DFzcnomsEc9AUggMs5ejOqMjCSAhXBYS7qS1aLCxBunXX4sYjGcBPCWNxRvIjYpgQhqMI2CbBYq7xK2IOdySWH25qnWJo0a078jeCsbGgeMYcz/QJBfjXxZ9/2IqUGCgARTZlaHVOiSzleGhBwASdWUqCPwCAA4fCrlkZ778s7EAYjWLUvzkNGjhgw3Pqrtw2Lpy2RKo0x+SHLTdax6pOof0bAt5nwa1Z8jJUz79lzYFk3g03f5lzz/DYCzjk33v2H3z/jXGk4R5Xs6v0KAcmmrRPkvKZmD4jt4cVoQJqRtepZ4PPA14GrAndZ1bOy64Vo7fn5KrlZ790/FbqI6l+cU/MAAAAASUVORK5CYII="
-                  class="online-status-badge"
-                />`}
+            <div class="icon-wrapper">
+              <img src="favicon.png" class="logo" />
+              ${this.online === null
+                ? ""
+                : this.online
+                ? html`<img
+                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAALCAYAAAAa5F88AAAAAXNSR0IArs4c6QAAAaZJREFUOE9lVNkVwjAMk0Yq7D8CzUjiyVcT4ANC4kOWZRP9WdCcRZCCQEDxHY/Mv4gL/2gOcc+yVBmShMYh40TIsQRwZZCMdEN8gZ1yHDppQ2Qmz2shQgx8w6gXau53kzwXeNv6eFMGQ4PAq17HazhI46iqP4GmKNqBVFm76eGVMZ/nBB7/F0UuSNfG1aosvvP1kmSgLuCG9Aa7ii1Pstr436BcYMf9UHiJThg+juXWz7vJtTYqaZ4zns8GQFNn5AbTwR2wehtw3S6b7cnDrzTgs4EM+9meZsQ5yEVpT35Zk4SWAmAzZrsAZNCmMsCPWlLIn24zgfY3i3408GbbTF8BPTXheInSuQVUoGEkklbwbo1ZMnhX2DR3bQGwEkSBBbZYHxlUT0eSwchdQVvMBhaUloCnDVVltesZKMHshCZ63LoNV/CEZj2KCjmWVHaN/KI8BDgbZNshPfR/01H1bfOa4i39bCtgRqf0ZYDPZFgPsbDO8Tyn9z/Zs4z+J/pYM/v49w4xPz0UU3SpfLbnM2fP0jpQRQ2Vfd8OvX3PyfhpSvkSuUiFL3ZrKsLW2tptAAAAAElFTkSuQmCC"
+                    class="online-status-badge"
+                  />`
+                : html`<img
+                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAALCAYAAAD8zZR4AAAAAXNSR0IArs4c6QAAAfZJREFUOE+FVYGRwyAMs4cIDJJ0/wGaDAIZwn+SICFN2u/1jtYYW5aMccPHzdYph3uY4etu+Ik/4VjcnCu9udDXHB7m4RYeCGMR2IPdzAO7iq+DijPueY+h08y9lMITzPlOKZa661gDcyBpsTvI0d5SPi9DMXK4Gm7bQ5Qt55hLcd9SjrkK6bcs5OcGegzf67/DeAbx4N8cuz9wCdxepIOZbTkFpHnVSuHwn4pAEgtbavV3zk1/STiX6lueAutY4Jp0Fsa57r6mKXAeFuwttfiaFEug3GDrOJxOeyU4OGrTrSfbUoqZAc/PQfvRhm5bmm5+jDPYQQQgAOgYH4DFzcnomsEc9AUggMs5ejOqMjCSAhXBYS7qS1aLCxBunXX4sYjGcBPCWNxRvIjYpgQhqMI2CbBYq7xK2IOdySWH25qnWJo0a078jeCsbGgeMYcz/QJBfjXxZ9/2IqUGCgARTZlaHVOiSzleGhBwASdWUqCPwCAA4fCrlkZ778s7EAYjWLUvzkNGjhgw3Pqrtw2Lpy2RKo0x+SHLTdax6pOof0bAt5nwa1Z8jJUz79lzYFk3g03f5lzz/DYCzjk33v2H3z/jXGk4R5Xs6v0KAcmmrRPkvKZmD4jt4cVoQJqRtepZ4PPA14GrAndZ1bOy64Vo7fn5KrlZ790/FbqI6l+cU/MAAAAASUVORK5CYII="
+                    class="online-status-badge"
+                  />`}
+            </div>
           </div>
           <button
             class="sidebar-button ${this.open ? "open" : ""}"
