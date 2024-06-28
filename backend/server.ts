@@ -49,6 +49,7 @@ let playerCount = 0;
 let backupOnNextOccasion = false;
 
 let logQueue: String[] = [];
+const serverUpdateExclusionFiles = ["allowlist.json", "server.properties"];
 
 const log = (content: string, isMCMessage = false) => {
   if (content.includes("http") && content.includes("://")) return;
@@ -233,6 +234,7 @@ const updateServer = async () => {
 
       const bedrockZipDownloadUrl = `https://minecraft.azureedge.net/bin-linux/bedrock-server-${version}.zip`;
 
+      log("Downloading new update...");
       const bedrockZipDownload = await fetch(bedrockZipDownloadUrl);
       const bedrockZipFile = await Deno.open(ZIP_FILE_PATH, {
         create: true,
@@ -241,23 +243,29 @@ const updateServer = async () => {
       await bedrockZipDownload.body?.pipeTo(bedrockZipFile.writable);
       // file.close();
 
+      log("Unpacking zip file...");
       await ensureDir(EXTRACT_DIR);
       await decompress(ZIP_FILE_PATH, EXTRACT_DIR);
+      log("Removing downloaded zip file...");
       await Deno.remove(ZIP_FILE_PATH);
 
       // Remove files from downloaded server, that should not be taken over.
-      const filesToExcludeFromMerge = ["allowlist.json", "server.properties"];
+      log("Excluding files that should not be overriden...");
+      log(`Files: ${serverUpdateExclusionFiles}`);
+      const filesToExcludeFromMerge = serverUpdateExclusionFiles;
       for (const fileName of filesToExcludeFromMerge) {
         const filePath = join(EXTRACT_DIR, fileName);
         await Deno.remove(filePath);
       }
 
+      log("Updating server...");
       await mergeDirectoriesAndOverwriteExisting(
         EXTRACT_DIR,
         MINECRAFT_SERVER_DIR
       );
+      Deno.remove(EXTRACT_DIR, { recursive: true });
 
-      log("Minecraft update completed!");
+      log("Server update completed!");
     } else {
       log("No version information found in crawled HTML.");
     }
