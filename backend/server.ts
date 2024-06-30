@@ -15,6 +15,7 @@ const ADMIN_PW = "ADMIN_PW";
 const MOD_PW = "MOD_PW";
 const BACKUP_PATH = "BACKUP_PATH";
 const AUTO_SHUTDOWN = "AUTO_SHUTDOWN";
+const DISABLE_AUTO_UPDATES = "DISABLE_AUTO_UPDATES";
 const ZIP_FILE_PATH = "./bedrock-server.zip";
 const EXTRACT_DIR = "../bedrock-server";
 const MINECRAFT_SERVER_DIR = "./";
@@ -22,6 +23,7 @@ const MINECRAFT_SERVER_DIR = "./";
 const env_adminPW: string = Deno.env.get(ADMIN_PW) || "";
 const env_modPW: string = Deno.env.get(MOD_PW) || "";
 const env_shutdownOnIdle: string = Deno.env.get(AUTO_SHUTDOWN) || ""; // y
+const env_updateWatcher: boolean = !Deno.env.has(DISABLE_AUTO_UPDATES); // y
 let env_backupPath: string = Deno.env.get(BACKUP_PATH) || ""; // /home/username/minecraft
 
 // Fix lazy user input
@@ -41,6 +43,7 @@ const FAILED = "FAILED";
 
 const IDLE_SERVER_MINUTES_THRESHOLD = 30;
 const ONE_MINUTE = 60 * 1000;
+const ONE_HOUR = 60 * ONE_MINUTE;
 let serverIdleMinutes = 0;
 
 let mcProcess: Deno.Process | null = null;
@@ -318,8 +321,15 @@ const shutdownOnIdleWatcher = async () => {
   }
 };
 
+const serverUpdateWatcher = async () => {
+  while (true) {
+    await timer(ONE_HOUR);
+  }
+};
+
 startServer();
 shutdownOnIdleWatcher();
+if (env_updateWatcher) serverUpdateWatcher();
 
 app.use(async (ctx, next) => {
   log(`${ctx.request.method} ${ctx.request.url}`);
