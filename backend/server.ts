@@ -16,13 +16,14 @@ const MOD_PW = "MOD_PW";
 const BACKUP_PATH = "BACKUP_PATH";
 const AUTO_SHUTDOWN = "AUTO_SHUTDOWN";
 const DISABLE_AUTO_UPDATES = "DISABLE_AUTO_UPDATES";
+const INSTALLED_VERSION_PATH = "./server-version.txt";
 const ZIP_FILE_PATH = "./bedrock-server.zip";
 const EXTRACT_DIR = "../bedrock-server";
 const MINECRAFT_SERVER_DIR = "./";
 
 const env_adminPW: string = Deno.env.get(ADMIN_PW) || "";
 const env_modPW: string = Deno.env.get(MOD_PW) || "";
-const env_shutdownOnIdle: string = Deno.env.get(AUTO_SHUTDOWN) || ""; // y
+const env_shutdownOnIdle: boolean = Deno.env.has(AUTO_SHUTDOWN); // y
 const env_updateWatcher: boolean = !Deno.env.has(DISABLE_AUTO_UPDATES); // y
 let env_backupPath: string = Deno.env.get(BACKUP_PATH) || ""; // /home/username/minecraft
 
@@ -50,6 +51,7 @@ let mcProcess: Deno.Process | null = null;
 let serverState = STOPPED;
 let playerCount = 0;
 let backupOnNextOccasion = false;
+let installedVersion: string | null = null;
 
 let logQueue: String[] = [];
 const serverUpdateExclusionFiles = ["allowlist.json", "server.properties"];
@@ -177,16 +179,32 @@ const messageObserver = async (
   }
 };
 
-const startServer = async () => {
-  mcProcess = Deno.run({
-    cmd: ["./bedrock_server"],
-    stdout: "piped",
-    stdin: "piped",
-    stderr: "piped",
-  });
+const doesFileExist = async (path: string) => {
+  try {
+    return (await Deno.stat(path)).isFile;
+  } catch (e) {
+    return false;
+  }
+};
 
-  messageObserver(mcProcess.stdout, Deno.stdout);
-  messageObserver(mcProcess.stderr, Deno.stderr);
+const startServer = async () => {
+  try {
+    if (await doesFileExist("./bedrock_server")) {
+      mcProcess = Deno.run({
+        cmd: ["./bedrock_server"],
+        stdout: "piped",
+        stdin: "piped",
+        stderr: "piped",
+      });
+
+      messageObserver(mcProcess.stdout, Deno.stdout);
+      messageObserver(mcProcess.stderr, Deno.stderr);
+    } else {
+      log("Server does not yet exist. Initiating...");
+    }
+  } catch (e) {
+    log("Could not start server.");
+  }
 };
 
 const backupServer = async () => {
@@ -221,20 +239,53 @@ const mergeDirectoriesAndOverwriteExisting = async (
   }
 };
 
+const getNewestServerVersion = async (): Promise<string | null> => {
+  const urlToCrawlNewestVersionNumber =
+    "https://www.minecraft.net/en-us/download/server/bedrock";
+
+  const html = await (await fetch(urlToCrawlNewestVersionNumber)).text();
+
+  const versionNumberRegex =
+    /<a href="https:\/\/minecraft\.azureedge\.net\/bin\-linux\/bedrock\-server\-(.*?)\.zip"/;
+  return html.match(versionNumberRegex)?.[1] || null;
+};
+
+const readInstalledVersion = async (): Promise<string | null> => {
+  try {
+    return await Deno.readTextFile(INSTALLED_VERSION_PATH);
+  } catch (e) {
+    // File does not exist.
+    return null;
+  }
+};
+
+const setInstalledVersion = async (version: string): Promise<void> => {
+  installedVersion = version;
+  try {
+    await Deno.writeTextFile(INSTALLED_VERSION_PATH, version);
+  } catch (e) {
+    log(
+      `Failed to write installed-version file! Path: ${INSTALLED_VERSION_PATH}`
+    );
+  }
+};
+
 const updateServer = async () => {
   try {
-    const urlToCrawlNewestVersionNumber =
-      "https://www.minecraft.net/en-us/download/server/bedrock";
+    const version = await getNewestServerVersion();
 
-    const html = await (await fetch(urlToCrawlNewestVersionNumber)).text();
+    if (!installedVersion) {
+      installedVersion = await readInstalledVersion();
+    }
 
-    const versionNumberRegex =
-      /<a href="https:\/\/minecraft\.azureedge\.net\/bin\-linux\/bedrock\-server\-(.*?)\.zip"/;
-    const version = html.match(versionNumberRegex)?.[1];
+    if (version === installedVersion) {
+      console.log("Update check: Already on the newest version!");
+      return;
+    }
+
+    log(`Most recent available bedrock server version is: ${version}`);
 
     if (version) {
-      log(`New bedrock server version is: ${version}`);
-
       const bedrockZipDownloadUrl = `https://minecraft.azureedge.net/bin-linux/bedrock-server-${version}.zip`;
 
       log("Downloading new update...");
@@ -244,7 +295,7 @@ const updateServer = async () => {
         write: true,
       });
       await bedrockZipDownload.body?.pipeTo(bedrockZipFile.writable);
-      // file.close();
+      // bedrockZipFile.close();
 
       log("Unpacking zip file...");
       await ensureDir(EXTRACT_DIR);
@@ -252,13 +303,16 @@ const updateServer = async () => {
       log("Removing downloaded zip file...");
       await Deno.remove(ZIP_FILE_PATH);
 
-      // Remove files from downloaded server, that should not be taken over.
-      log("Excluding files that should not be overriden...");
-      log(`Files: ${serverUpdateExclusionFiles}`);
-      const filesToExcludeFromMerge = serverUpdateExclusionFiles;
-      for (const fileName of filesToExcludeFromMerge) {
-        const filePath = join(EXTRACT_DIR, fileName);
-        await Deno.remove(filePath);
+      // No installed version == Fresh install without excludes
+      if (!installedVersion) {
+        // Remove files from downloaded server, that should not be taken over.
+        log("Excluding files that should not be overriden...");
+        log(`Files: ${serverUpdateExclusionFiles}`);
+        const filesToExcludeFromMerge = serverUpdateExclusionFiles;
+        for (const fileName of filesToExcludeFromMerge) {
+          const filePath = join(EXTRACT_DIR, fileName);
+          await Deno.remove(filePath);
+        }
       }
 
       log("Updating server...");
@@ -268,9 +322,11 @@ const updateServer = async () => {
       );
       Deno.remove(EXTRACT_DIR, { recursive: true });
 
+      await setInstalledVersion(version);
+
       log("Server update completed!");
     } else {
-      log("No version information found in crawled HTML.");
+      log("Could not fetch newest minecraft server version!");
     }
   } catch {
     log("Updating server failed!");
@@ -310,7 +366,7 @@ const timer = (delayInMillis: number) =>
 const shutdownOnIdleWatcher = async () => {
   while (true) {
     await timer(ONE_MINUTE);
-    if (env_shutdownOnIdle && playerCount === 0 && serverState === STARTED) {
+    if (playerCount === 0 && serverState === STARTED) {
       if (++serverIdleMinutes === IDLE_SERVER_MINUTES_THRESHOLD) {
         await stopAndBackupServer();
         shutdownHost();
@@ -323,12 +379,13 @@ const shutdownOnIdleWatcher = async () => {
 
 const serverUpdateWatcher = async () => {
   while (true) {
+    await updateServer();
     await timer(ONE_HOUR);
   }
 };
 
 startServer();
-shutdownOnIdleWatcher();
+if (env_shutdownOnIdle) shutdownOnIdleWatcher();
 if (env_updateWatcher) serverUpdateWatcher();
 
 app.use(async (ctx, next) => {
