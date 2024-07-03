@@ -65,13 +65,20 @@ const log = (content: string, isMCMessage = false) => {
 
 log("Backup Path: " + env_backupPath);
 log(
+  `Automatic Minecraft server updates are ${
+    DISABLE_AUTO_UPDATES
+      ? "disabled. Restart with the environment variable 'DISABLE_AUTO_UPDATES=y', to enable it"
+      : "enabled"
+  }.`
+);
+log(
   env_shutdownOnIdle
     ? `Server (Computer) will shut down if no players for ${IDLE_SERVER_MINUTES_THRESHOLD} minutes. To avoid that, do not set '${AUTO_SHUTDOWN}'. If the minecraft server is "stopped" manually, the server (host machine) will not shut down by itself.`
     : `Server (Computer) is set to not automatically shutdown, if there are no players. Provide '${AUTO_SHUTDOWN}=yes' if you want that.`
 );
 if (!env_adminPW)
   log(
-    `No ADMIN password given. Provide the variable '${ADMIN_PW}' with a freely chosen password on startup of cobble-quarry, otherwise everyone with access to the website can execute all actions.`
+    `WARNING: No ADMIN password given. Provide the variable '${ADMIN_PW}' with a freely chosen password on startup of cobble-quarry, otherwise everyone with access to the website can destroy the server with unprotected admin access.`
   );
 if (!env_modPW)
   log(
@@ -114,7 +121,7 @@ router
       mcProcess !== null &&
       !(serverState === STOPPED)
     ) {
-      let command = (await ctx.request.body().value).trim();
+      let command: string = await ctx.request.body.text();
       command = command.startsWith("/") ? command.substring(1) : command;
       log(`Executing: ${command}`);
       await mcProcess?.stdin?.write(encoder.encode(command + "\n"));
@@ -304,7 +311,7 @@ const updateServer = async () => {
       await Deno.remove(ZIP_FILE_PATH);
 
       // No installed version == Fresh install without excludes
-      if (!installedVersion) {
+      if (installedVersion) {
         // Remove files from downloaded server, that should not be taken over.
         log("Excluding files that should not be overriden...");
         log(`Files: ${serverUpdateExclusionFiles}`);
