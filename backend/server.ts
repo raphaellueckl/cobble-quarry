@@ -154,12 +154,15 @@ const startBackupProcedure = async () => {
 };
 
 const startServerUpdateProcedure = async () => {
-  await stopAndBackupServer(
-    20,
-    "Starting server update. Restart in approximately one minute."
-  );
-  await updateServer();
-  startServer();
+  const version = await checkServerUpdateDue();
+  if (version) {
+    await stopAndBackupServer(
+      20,
+      "Starting server update. Restart within a few seconds."
+    );
+    await updateServer(version);
+    await startServer();
+  }
 };
 
 const messageObserver = async (
@@ -277,7 +280,7 @@ const setInstalledVersion = async (version: string): Promise<void> => {
   }
 };
 
-const updateServer = async () => {
+const checkServerUpdateDue = async (): Promise<string | null> => {
   try {
     const version = await getNewestServerVersion();
 
@@ -287,54 +290,58 @@ const updateServer = async () => {
 
     if (version === installedVersion) {
       console.log("Update check: Already on the newest version!");
-      return;
+      return null;
     }
 
-    log(`Most recent available bedrock server version is: ${version}`);
+    log(`UPDATE: Most recent available bedrock server version is: ${version}`);
+    return version;
+  } catch (e) {
+    log("Could not fetch newest minecraft server version!");
+    return null;
+  }
+};
 
-    if (version) {
-      const bedrockZipDownloadUrl = `https://minecraft.azureedge.net/bin-linux/bedrock-server-${version}.zip`;
+const updateServer = async (version: string) => {
+  try {
+    const bedrockZipDownloadUrl = `https://minecraft.azureedge.net/bin-linux/bedrock-server-${version}.zip`;
 
-      log("Downloading new update...");
-      const bedrockZipDownload = await fetch(bedrockZipDownloadUrl);
-      const bedrockZipFile = await Deno.open(ZIP_FILE_PATH, {
-        create: true,
-        write: true,
-      });
-      await bedrockZipDownload.body?.pipeTo(bedrockZipFile.writable);
-      // bedrockZipFile.close();
+    log("Downloading new update...");
+    const bedrockZipDownload = await fetch(bedrockZipDownloadUrl);
+    const bedrockZipFile = await Deno.open(ZIP_FILE_PATH, {
+      create: true,
+      write: true,
+    });
+    await bedrockZipDownload.body?.pipeTo(bedrockZipFile.writable);
+    // bedrockZipFile.close();
 
-      log("Unpacking zip file...");
-      await ensureDir(EXTRACT_DIR);
-      await decompress(ZIP_FILE_PATH, EXTRACT_DIR);
-      log("Removing downloaded zip file...");
-      await Deno.remove(ZIP_FILE_PATH);
+    log("Unpacking zip file...");
+    await ensureDir(EXTRACT_DIR);
+    await decompress(ZIP_FILE_PATH, EXTRACT_DIR);
+    log("Removing downloaded zip file...");
+    await Deno.remove(ZIP_FILE_PATH);
 
-      // No installed version == Fresh install without excludes
-      if (installedVersion) {
-        // Remove files from downloaded server, that should not be taken over.
-        log("Excluding files that should not be overriden...");
-        log(`Files: ${serverUpdateExclusionFiles}`);
-        const filesToExcludeFromMerge = serverUpdateExclusionFiles;
-        for (const fileName of filesToExcludeFromMerge) {
-          const filePath = join(EXTRACT_DIR, fileName);
-          await Deno.remove(filePath);
-        }
+    // No installed version == Fresh install without excludes
+    if (installedVersion) {
+      // Remove files from downloaded server, that should not be taken over.
+      log("Excluding files that should not be overriden...");
+      log(`Files: ${serverUpdateExclusionFiles}`);
+      const filesToExcludeFromMerge = serverUpdateExclusionFiles;
+      for (const fileName of filesToExcludeFromMerge) {
+        const filePath = join(EXTRACT_DIR, fileName);
+        await Deno.remove(filePath);
       }
-
-      log("Updating server...");
-      await mergeDirectoriesAndOverwriteExisting(
-        EXTRACT_DIR,
-        MINECRAFT_SERVER_DIR
-      );
-      Deno.remove(EXTRACT_DIR, { recursive: true });
-
-      await setInstalledVersion(version);
-
-      log("Server update completed!");
-    } else {
-      log("Could not fetch newest minecraft server version!");
     }
+
+    log("Updating server...");
+    await mergeDirectoriesAndOverwriteExisting(
+      EXTRACT_DIR,
+      MINECRAFT_SERVER_DIR
+    );
+    Deno.remove(EXTRACT_DIR, { recursive: true });
+
+    await setInstalledVersion(version);
+
+    log("Server update completed!");
   } catch {
     log("Updating server failed!");
   }
@@ -386,7 +393,7 @@ const shutdownOnIdleWatcher = async () => {
 
 const serverUpdateWatcher = async () => {
   while (true) {
-    await updateServer();
+    await startServerUpdateProcedure();
     await timer(ONE_HOUR);
   }
 };
