@@ -109,6 +109,12 @@ export class Content extends LitElement {
     );
   }
 
+  handleUpdateServer(ev) {
+    store.dispatchEvent(
+      new CustomEvent(Events.UPDATE_SERVER, { detail: ev?.target?.value })
+    );
+  }
+
   handleMouseOver(ev) {
     if (!this.passwordInput.value) {
       const elem = ev.target;
@@ -170,6 +176,13 @@ export class Content extends LitElement {
             @mouseover="${this.handleMouseOver}"
           >
             Backup Server
+          </button>
+          <button
+            class="button-update"
+            @click="${this.handleUpdateServer}"
+            @mouseover="${this.handleMouseOver}"
+          >
+            Update Server
           </button>
         </div>
         <h2 class="section">Commands (ENTER to send)</h2>
