@@ -1,4 +1,4 @@
-import { Application, Router } from "https://deno.land/x/oak/mod.ts";
+import { Application, Router } from "https://deno.land/x/oak@v16.0.0/mod.ts";
 import { readLines } from "https://deno.land/std@0.104.0/io/mod.ts";
 import * as conversion from "https://deno.land/std@0.152.0/streams/conversion.ts";
 import * as stdCopy from "https://deno.land/std@0.149.0/fs/copy.ts";
