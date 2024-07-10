@@ -20,6 +20,8 @@ const INSTALLED_VERSION_PATH = "./server-version.txt";
 const ZIP_FILE_PATH = "./bedrock-server.zip";
 const EXTRACT_DIR = "../bedrock-server";
 const MINECRAFT_SERVER_DIR = "./";
+const COBBLE_EXECUTABLE = "/cobble";
+const COBBLE_INTERNAL_FOLDER = "/cobblequarry";
 
 const env_adminPW: string = Deno.env.get(ADMIN_PW) || "";
 const env_modPW: string = Deno.env.get(MOD_PW) || "";
@@ -221,8 +223,8 @@ const backupServer = async () => {
   if (backupOnNextOccasion) {
     const backupPath = env_backupPath + new Date().toISOString();
     await stdCopy.copy(Deno.cwd(), backupPath);
-    await Deno.remove(backupPath + "/cobble");
-    await Deno.remove(backupPath + "/cobblequarry", { recursive: true });
+    await Deno.remove(backupPath + COBBLE_EXECUTABLE);
+    await Deno.remove(backupPath + COBBLE_INTERNAL_FOLDER, { recursive: true });
     await compress(backupPath, `${backupPath}.zip`);
     await Deno.remove(backupPath, { recursive: true });
     backupOnNextOccasion = false;
@@ -420,7 +422,7 @@ app.listen({ port });
 app.use(async (context, next) => {
   try {
     await context.send({
-      root: `${Deno.cwd()}/cobblequarry`,
+      root: `${Deno.cwd()}${COBBLE_INTERNAL_FOLDER}`,
       index: "index.html",
     });
   } catch {
