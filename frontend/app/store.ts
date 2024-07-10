@@ -7,6 +7,7 @@ enum Events {
   START_SERVER = "START_SERVER",
   STOP_SERVER = "STOP_SERVER",
   BACKUP_SERVER = "BACKUP_SERVER",
+  UPDATE_SERVER = "UPDATE_SERVER",
   EXECUTE_COMMAND = "EXECUTE_COMMAND",
   UPDATED_LOGS = "UPDATED_LOGS",
   UPDATED_SERVER_STATE = "UPDATED_SERVER_STATE",
@@ -71,6 +72,10 @@ store.addEventListener(Events.STOP_SERVER, () => {
 
 store.addEventListener(Events.BACKUP_SERVER, () => {
   request("/backup", POST);
+});
+
+store.addEventListener(Events.UPDATE_SERVER, () => {
+  request("/update", POST);
 });
 
 store.addEventListener(Events.EXECUTE_COMMAND, ({ detail }) => {
