@@ -32,6 +32,7 @@ export class Content extends LitElement {
       height: 50px;
       font-family: "content-font";
       font-size: 24px;
+      line-height: 0.8;
     }
 
     pre {
