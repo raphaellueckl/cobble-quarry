@@ -1,5 +1,7 @@
 # Cobble Quarry - A simple and lightweight server manager for Minecraft Bedrock
 
+![Cobble Quarry UI](cq.png "Cobble Quarry UI")
+
 ## Features:
 
 - Automatic server updates.
