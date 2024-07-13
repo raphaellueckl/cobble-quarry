@@ -45,6 +45,7 @@ export class Donation extends LitElement {
   `;
 
   render() {
+    if (window.location.hash.includes("hide=donations")) return html``;
     return html`
       <a class="content" href="https://www.paypal.com/paypalme/codepleb/5" target="_blank">
         <div class="text">
