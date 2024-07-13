@@ -58,13 +58,13 @@ export class Content extends LitElement {
     }
 
     .run-away {
-      animation: flee 3s linear 0s 1;
+      animation: flee 0.5s linear 0s 1;
     }
 
     @keyframes flee {
       30% {
         transform: rotate(180deg);
-        transform-origin: 500px 500px;
+        transform-origin: 150px 250px;
       }
       100% {
         transform: rotate(4320deg);
