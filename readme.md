@@ -84,11 +84,11 @@ Important: This is how I did it. There are a ton of other ways to achieve the de
    1. See if you can boot your server host computer.
    1. Enable login without password on your server host computer.
 1. Setup a Minecraft service on your server host computer. See the example (replace values).
-   1. Terminal: `sudo nano /etc/systemd/system/Minecraft.service`
+   1. Terminal: `sudo nano /etc/systemd/system/minecraft.service`
    1. Add the content from the example configuration below and adapt values.
    1. Terminal: `sudo systemctl daemon-reload`
-   1. Terminal: `sudo systemctl enable Minecraft.service`
-   1. Terminal: `sudo systemctl start Minecraft.service`
+   1. Terminal: `sudo systemctl enable minecraft.service`
+   1. Terminal: `sudo systemctl start minecraft.service`
 
 Note: If you ever need to stop the Minecraft service, I highly recommend stopping the Minecraft-server first. If you just kill the service, it will kill the Minecraft server, without shutting it down gracefully. This usually is no problem if it happens, but it's always better to shutdown the Minecraft server gracefully they way it is intended and not just kill it.
 
@@ -96,7 +96,7 @@ Minecraft service configuration:
 
 ```bash
 [Unit]
-Description=Minecraft
+Description=minecraft
 After=network.target
 
 [Service]
@@ -104,12 +104,12 @@ Environment="ADMIN_PW=admin123"
 Environment="MOD_PW=mod123"
 Environment="AUTO_SHUTDOWN=1"
 Environment="DISABLE_AUTO_UPDATES=1"
-Environment="BACKUP_PATH=/home/username/Minecraft_backups"
+Environment="BACKUP_PATH=/home/username/minecraft_backups"
 ExecStart=/home/username/Minecraft/cobble
-WorkingDirectory=/home/username/Minecraft
+WorkingDirectory=/home/username/minecraft
 User=username
 Group=username
-Restart=on-failure
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
