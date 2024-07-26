@@ -21,6 +21,8 @@ If you want to test it, check the make-release.sh script and immitate those step
 
 ## Quick Installation (extended setup below) - Only run the server manager
 
+**NOTE:** I recorded a video for the extended installation, which is described further below, but if you don't understand the manual, maybe it help: https://www.youtube.com/watch?v=bMNqDBrC-lI
+
 1. Download the latest release to your Ubuntu based OS: https://github.com/raphaellueckl/cobble-quarry/releases
 1. Open the zip archive and extract its contents (1 folder, 1 file)
    1. Move both things into a folder, where you want to initialise your Minecraft server.
