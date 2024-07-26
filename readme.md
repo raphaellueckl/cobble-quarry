@@ -124,3 +124,7 @@ WantedBy=multi-user.target
 - Cobble Quarry: The application that manages the Minecraft server software.
 - Server host computer: The server machine (computer), that actually runs the Minecraft server software (and Cobble Quarry).
 - Raspberry Pi: A computer running 24/7 and being able to start "wake on lan" the server host computer.
+
+## Feedback & Support
+
+Discord: https://discord.gg/TARdDh4hN8
