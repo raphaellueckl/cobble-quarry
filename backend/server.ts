@@ -39,6 +39,10 @@ const port = 3000;
 const router = new Router();
 const encoder = new TextEncoder();
 
+// The download URL for linux bedrock server. This regex should find it.
+const DOWNLOAD_REGEX =
+  /https:\/\/(.*)\/bin\-linux\/bedrock\-server\-(.*?)\.zip/;
+
 const STARTED = "STARTED";
 const STOPPED = "STOPPED";
 const SUCCESS = "SUCCESS";
@@ -54,6 +58,7 @@ let serverState = STOPPED;
 let playerCount = 0;
 let backupOnNextOccasion = false;
 let installedVersion: string | null = null;
+let downloadUrl: string | null = null;
 
 let logQueue: String[] = [];
 const serverUpdateExclusionFiles = ["allowlist.json", "server.properties"];
@@ -257,9 +262,8 @@ const getNewestServerVersion = async (): Promise<string | null> => {
 
   const html = await (await fetch(urlToCrawlNewestVersionNumber)).text();
 
-  const versionNumberRegex =
-    /<a href="https:\/\/minecraft\.azureedge\.net\/bin\-linux\/bedrock\-server\-(.*?)\.zip"/;
-  return html.match(versionNumberRegex)?.[1] || null;
+  downloadUrl = html.match(DOWNLOAD_REGEX)?.[0] || null;
+  return html.match(DOWNLOAD_REGEX)?.[2] || null;
 };
 
 const readInstalledVersion = async (): Promise<string | null> => {
@@ -284,19 +288,21 @@ const setInstalledVersion = async (version: string): Promise<void> => {
 
 const checkServerUpdateDue = async (): Promise<string | null> => {
   try {
-    const version = await getNewestServerVersion();
+    const newestAvailableVersion = await getNewestServerVersion();
 
     if (!installedVersion) {
       installedVersion = await readInstalledVersion();
     }
 
-    if (version === installedVersion) {
+    if (newestAvailableVersion === installedVersion) {
       console.log("Update check: Already on the newest version!");
       return null;
     }
 
-    log(`UPDATE: Most recent available bedrock server version is: ${version}`);
-    return version;
+    log(
+      `UPDATE: Most recent available bedrock server version is: ${newestAvailableVersion}`
+    );
+    return newestAvailableVersion;
   } catch (e) {
     log("Could not fetch newest minecraft server version!");
     return null;
@@ -305,10 +311,14 @@ const checkServerUpdateDue = async (): Promise<string | null> => {
 
 const updateServer = async (version: string) => {
   try {
-    const bedrockZipDownloadUrl = `https://minecraft.azureedge.net/bin-linux/bedrock-server-${version}.zip`;
-
     log("Downloading new update...");
-    const bedrockZipDownload = await fetch(bedrockZipDownloadUrl);
+    if (!downloadUrl) {
+      log(
+        "Download URL was not present. Probably there was a change on Mojangs side and this app therefore needs an update."
+      );
+      return null;
+    }
+    const bedrockZipDownload = await fetch(downloadUrl);
     const bedrockZipFile = await Deno.open(ZIP_FILE_PATH, {
       create: true,
       write: true,
