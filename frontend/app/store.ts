@@ -16,6 +16,8 @@ enum Events {
 const POST = "POST";
 const GET = "GET";
 
+let latestLogs: string[] = [];
+
 // EventTarget, so that listeners can be registered on it
 // Element, as a workaround for safari
 const _store = new EventTarget() || Element.prototype;
@@ -92,6 +94,7 @@ const fetchLogs = async () => {
     await timer(2000);
     try {
       const { status, logs } = await request("/status-and-logs", GET);
+      latestLogs = logs;
       store.dispatchEvent(
         new CustomEvent(Events.UPDATED_LOGS, { detail: logs })
       );
@@ -114,7 +117,10 @@ const fetchLogs = async () => {
       } else {
         store.dispatchEvent(
           new CustomEvent(Events.UPDATED_LOGS, {
-            detail: ["Server is not reachable! This will "],
+            detail: [
+              "Server is not reachable! It might be, that the service got killed.",
+              ...latestLogs,
+            ],
           })
         );
       }
