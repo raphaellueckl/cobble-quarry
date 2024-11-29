@@ -17,6 +17,7 @@ const BACKUP_PATH = "BACKUP_PATH";
 const MULTI_SERVER = "MULTI_SERVER";
 const AUTO_SHUTDOWN = "AUTO_SHUTDOWN";
 const DISABLE_AUTO_UPDATES = "DISABLE_AUTO_UPDATES";
+const PORT = "PORT";
 const MULTI_SERVER_TIMESTAMP_PATH = "/tmp/cobblequarry-multiserver.txt";
 const INSTALLED_VERSION_PATH = "./server-version.txt";
 const ZIP_FILE_PATH = "./bedrock-server.zip";
@@ -30,6 +31,7 @@ const env_modPW: string = Deno.env.get(MOD_PW) || "";
 const env_shutdownOnIdle: boolean = Deno.env.has(AUTO_SHUTDOWN); // y
 const env_updateWatcher: boolean = !Deno.env.has(DISABLE_AUTO_UPDATES); // y
 const env_multi_server: string = Deno.env.get(MULTI_SERVER) || ""; // y
+const env_port: number = Number(Deno.env.get(PORT)) || 3000;
 let env_backupPath: string = Deno.env.get(BACKUP_PATH) || ""; // /home/username/minecraft
 
 // Fix lazy user input
@@ -38,7 +40,6 @@ if (env_backupPath && env_backupPath[env_backupPath.length - 1] !== "/") {
 }
 
 const app = new Application();
-const port = 3000;
 const router = new Router();
 const encoder = new TextEncoder();
 
@@ -499,7 +500,7 @@ app.use(
   })
 );
 
-app.listen({ port });
+app.listen({ port: env_port });
 
 app.use(async (context, next) => {
   try {
@@ -512,4 +513,9 @@ app.use(async (context, next) => {
   }
 });
 
-log(`Listening on: localhost:${port}`);
+log(
+  `Listening on: ${
+    Deno.networkInterfaces().find((ni) => ni.address.startsWith("192.168."))
+      ?.address || "localhost"
+  }:${env_port}`
+);
