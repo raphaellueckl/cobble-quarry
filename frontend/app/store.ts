@@ -118,7 +118,14 @@ const fetchLogs = async () => {
         store.dispatchEvent(
           new CustomEvent(Events.UPDATED_LOGS, {
             detail: [
-              "Server is not reachable! It might be, that the service got killed.",
+              `[Cobble]    [${new Date()
+                .toISOString()
+                .split("Z")[0]
+                .split(".")[0]
+                .split("T")
+                .join(
+                  " "
+                )}] Server is not reachable! It might be, that the service got killed.`,
               ...latestLogs,
             ],
           })
