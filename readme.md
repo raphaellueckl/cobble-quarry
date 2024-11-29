@@ -39,7 +39,7 @@ Note: All parameters are optional, although some are highly recommended!
 Example usage:
 
 ```bash
-ADMIN_PW=admin123 MOD_PW=mod123 AUTO_SHUTDOWN=1 DISABLE_AUTO_UPDATES=1 BACKUP_PATH=/home/username/Minecraft_backups ./cobble
+ADMIN_PW=admin123 MOD_PW=mod123 AUTO_SHUTDOWN=y DISABLE_AUTO_UPDATES=y BACKUP_PATH=/home/username/minecraft_backups ./cobble
 ```
 
 - `ADMIN_PW` (Recommended) A freely chosen secure password for all your admin actions. If it is too easy, someone can completely destroy your server.
@@ -48,6 +48,7 @@ ADMIN_PW=admin123 MOD_PW=mod123 AUTO_SHUTDOWN=1 DISABLE_AUTO_UPDATES=1 BACKUP_PA
 - `AUTO_SHUTDOWN` Use this variable, if you want your server to shut down, it no player is online for 30 minutes.
 - `MULTI_SERVER` If you run several servers on one machine and have `AUTO_SHUTDOWN` enabled, you need to set this to true, otherwise, one Minecraft server - if empty - will shutdown the host computer (and therefore kill all other servers).
 - `DISABLE_AUTO_UPDATES` If you don't want Cobble Quarry to get and install the newest Minecraft versions automatically, set this variable!
+- `PORT` If you want a specific port for the Website interface or if you run a `MULTI_SERVER` setup, you need to add separate ports. You cannot run multiple servers on the default port `3000`.
 
 ## (Optional) Extended Installation - With focus on saving electricity
 
@@ -114,6 +115,7 @@ Environment="AUTO_SHUTDOWN=y"
 Environment="DISABLE_AUTO_UPDATES=y"
 Environment="MULTI_SERVER=y"
 Environment="BACKUP_PATH=/home/username/Minecraft_backups"
+Environment="PORT=3001"
 ExecStart=/home/username/Minecraft/cobble
 WorkingDirectory=/home/username/Minecraft
 User=username
