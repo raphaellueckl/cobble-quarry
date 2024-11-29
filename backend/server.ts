@@ -14,8 +14,10 @@ Deno.env.set("LD_LIBRARY_PATH", ".");
 const ADMIN_PW = "ADMIN_PW";
 const MOD_PW = "MOD_PW";
 const BACKUP_PATH = "BACKUP_PATH";
+const MULTI_SERVER = "MULTI_SERVER";
 const AUTO_SHUTDOWN = "AUTO_SHUTDOWN";
 const DISABLE_AUTO_UPDATES = "DISABLE_AUTO_UPDATES";
+const MULTI_SERVER_TIMESTAMP_PATH = "/tmp/cobblequarry-multiserver.txt";
 const INSTALLED_VERSION_PATH = "./server-version.txt";
 const ZIP_FILE_PATH = "./bedrock-server.zip";
 const EXTRACT_DIR = "../bedrock-server";
@@ -27,6 +29,7 @@ const env_adminPW: string = Deno.env.get(ADMIN_PW) || "";
 const env_modPW: string = Deno.env.get(MOD_PW) || "";
 const env_shutdownOnIdle: boolean = Deno.env.has(AUTO_SHUTDOWN); // y
 const env_updateWatcher: boolean = !Deno.env.has(DISABLE_AUTO_UPDATES); // y
+const env_multi_server: string = Deno.env.get(MULTI_SERVER) || ""; // y
 let env_backupPath: string = Deno.env.get(BACKUP_PATH) || ""; // /home/username/minecraft
 
 // Fix lazy user input
@@ -50,7 +53,9 @@ const FAILED = "FAILED";
 
 const IDLE_SERVER_MINUTES_THRESHOLD = 30;
 const ONE_MINUTE = 60 * 1000;
-const ONE_HOUR = 60 * ONE_MINUTE;
+const TWO_MINUTES = 2 * ONE_MINUTE;
+const FIVE_MINUTES = ONE_MINUTE * 5;
+const ONE_HOUR = ONE_MINUTE * 60;
 let serverIdleMinutes = 0;
 
 let mcProcess: Deno.Process | null = null;
@@ -60,28 +65,33 @@ let backupOnNextOccasion = false;
 let installedVersion: string | null = null;
 let downloadUrl: string | null = null;
 
-let logQueue: String[] = [];
+const logQueue: string[] = [];
 const serverUpdateExclusionFiles = ["allowlist.json", "server.properties"];
 
 const log = (content: string, isMCMessage = false) => {
   if (content.includes("http") && content.includes("://")) return;
   const msg = (isMCMessage ? "[Minecraft] " : "[Cobble]    ") + content;
-  logQueue.push(msg);
+  logQueue.unshift(msg);
   console.log(msg);
 };
 
 log("Backup Path: " + env_backupPath);
 log(
   `Automatic Minecraft server updates are ${
-    DISABLE_AUTO_UPDATES
-      ? "disabled. Restart with the environment variable 'DISABLE_AUTO_UPDATES=y', to enable it"
-      : "enabled"
+    env_updateWatcher
+      ? "enabled"
+      : "disabled. Restart with the environment variable 'DISABLE_AUTO_UPDATES=y', to enable it"
   }.`
 );
 log(
   env_shutdownOnIdle
-    ? `Server (Computer) will shut down if no players for ${IDLE_SERVER_MINUTES_THRESHOLD} minutes. To avoid that, do not set '${AUTO_SHUTDOWN}'. If the minecraft server is "stopped" manually, the server (host machine) will not shut down by itself.`
+    ? `Server (Computer) will shut down if no players for ${IDLE_SERVER_MINUTES_THRESHOLD} minutes. To avoid that, do not set '${AUTO_SHUTDOWN}'. If the minecraft server is "stopped" manually, the server (host computer) will not shut down by itself.`
     : `Server (Computer) is set to not automatically shutdown, if there are no players. Provide '${AUTO_SHUTDOWN}=yes' if you want that.`
+);
+log(
+  env_multi_server
+    ? "Server is running in 'MULTI_SERVER' mode. This is only needed if you run several Minecraft servers on this host computer."
+    : "Server is NOT running in 'MULTI_SERVER' mode. This is okay if only one Minecraft server is running on this host computer."
 );
 if (!env_adminPW)
   log(
@@ -199,13 +209,42 @@ const messageObserver = async (
 const doesFileExist = async (path: string) => {
   try {
     return (await Deno.stat(path)).isFile;
-  } catch (e) {
+  } catch (_e) {
     return false;
   }
 };
 
-const startServer = async () => {
+const writeMultiServerTimestamp = async () => {
   try {
+    await Deno.writeTextFile(
+      MULTI_SERVER_TIMESTAMP_PATH,
+      new Date().toString()
+    );
+  } catch (_e) {
+    log(
+      `Failed to write mutli-server-timestamp file! Path: ${MULTI_SERVER_TIMESTAMP_PATH}`
+    );
+  }
+};
+
+const readMultiServerTimestamp = async () => {
+  try {
+    const timestampAsString = await Deno.readTextFile(
+      MULTI_SERVER_TIMESTAMP_PATH
+    );
+    return new Date(timestampAsString);
+  } catch (_e) {
+    log("Error: Couldn't read multiserver timestamp.");
+    return new Date(0);
+  }
+};
+
+const startServer = async () => {
+  serverIdleMinutes = 0;
+  try {
+    if (env_multi_server) {
+      await writeMultiServerTimestamp();
+    }
     if (await doesFileExist("./bedrock_server")) {
       mcProcess = Deno.run({
         cmd: ["./bedrock_server"],
@@ -219,7 +258,7 @@ const startServer = async () => {
     } else {
       log("Server does not yet exist. Initiating...");
     }
-  } catch (e) {
+  } catch (_e) {
     log("Could not start server.");
   }
 };
@@ -269,7 +308,7 @@ const getNewestServerVersion = async (): Promise<string | null> => {
 const readInstalledVersion = async (): Promise<string | null> => {
   try {
     return await Deno.readTextFile(INSTALLED_VERSION_PATH);
-  } catch (e) {
+  } catch (_e) {
     // File does not exist.
     return null;
   }
@@ -279,7 +318,7 @@ const setInstalledVersion = async (version: string): Promise<void> => {
   installedVersion = version;
   try {
     await Deno.writeTextFile(INSTALLED_VERSION_PATH, version);
-  } catch (e) {
+  } catch (_e) {
     log(
       `Failed to write installed-version file! Path: ${INSTALLED_VERSION_PATH}`
     );
@@ -303,7 +342,7 @@ const checkServerUpdateDue = async (): Promise<string | null> => {
       `UPDATE: Most recent available bedrock server version is: ${newestAvailableVersion}`
     );
     return newestAvailableVersion;
-  } catch (e) {
+  } catch (_e) {
     log("Could not fetch newest minecraft server version!");
     return null;
   }
@@ -393,12 +432,45 @@ const shutdownOnIdleWatcher = async () => {
   while (true) {
     await timer(ONE_MINUTE);
     if (playerCount === 0 && serverState === STARTED) {
-      if (++serverIdleMinutes === IDLE_SERVER_MINUTES_THRESHOLD) {
+      if (++serverIdleMinutes >= IDLE_SERVER_MINUTES_THRESHOLD) {
         await stopAndBackupServer();
-        shutdownHost();
+        if (env_multi_server) {
+          try {
+            const timestamp = await readMultiServerTimestamp();
+            if (
+              new Date().getTime() - timestamp.getTime() >
+              IDLE_SERVER_MINUTES_THRESHOLD * 60 * 1000
+            ) {
+              shutdownHost();
+            }
+          } catch (_e) {
+            shutdownHost();
+          }
+        } else {
+          shutdownHost();
+        }
+      }
+    } else if (playerCount > 0 && serverState === STARTED) {
+      serverIdleMinutes = 0;
+      if (env_multi_server) {
+        await writeMultiServerTimestamp();
       }
     } else {
-      serverIdleMinutes = 0;
+      if (env_multi_server) {
+        try {
+          const timestamp = await readMultiServerTimestamp();
+          if (
+            new Date().getTime() - timestamp.getTime() >
+            IDLE_SERVER_MINUTES_THRESHOLD * 60 * 1000 + TWO_MINUTES
+          ) {
+            setTimeout(shutdownHost, FIVE_MINUTES);
+          }
+        } catch (_e) {
+          setTimeout(shutdownHost, FIVE_MINUTES);
+        }
+      } else {
+        setTimeout(shutdownHost, FIVE_MINUTES);
+      }
     }
   }
 };
