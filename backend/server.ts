@@ -235,7 +235,7 @@ const readMultiServerTimestamp = async () => {
     );
     return new Date(timestampAsString);
   } catch (_e) {
-    log("Error: Couldn't read multiserver timestamp.");
+    log(`Error - Could not read: ${MULTI_SERVER_TIMESTAMP_PATH}`);
     return new Date(0);
   }
 };
@@ -311,6 +311,7 @@ const readInstalledVersion = async (): Promise<string | null> => {
     return await Deno.readTextFile(INSTALLED_VERSION_PATH);
   } catch (_e) {
     // File does not exist.
+    log(`Error - Could not read: ${INSTALLED_VERSION_PATH}`);
     return null;
   }
 };
@@ -335,7 +336,9 @@ const checkServerUpdateDue = async (): Promise<string | null> => {
     }
 
     if (newestAvailableVersion === installedVersion) {
-      console.log("Update check: Already on the newest version!");
+      console.log(
+        `Update check: Already on the newest version! ${newestAvailableVersion}`
+      );
       return null;
     }
 
