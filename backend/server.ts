@@ -18,6 +18,8 @@ const MULTI_SERVER = "MULTI_SERVER";
 const AUTO_SHUTDOWN = "AUTO_SHUTDOWN";
 const DISABLE_AUTO_UPDATES = "DISABLE_AUTO_UPDATES";
 const PORT = "PORT";
+const DEBUG_MODE = "ENABLE_DEBUG_MODE";
+const PREFERRED_LOG_SIZE = "PREFERRED_LOG_SIZE";
 const MULTI_SERVER_TIMESTAMP_PATH = "/tmp/cobblequarry-multiserver.txt";
 const INSTALLED_VERSION_PATH = "./server-version.txt";
 const ZIP_FILE_PATH = "./bedrock-server.zip";
@@ -31,7 +33,10 @@ const env_modPW: string = Deno.env.get(MOD_PW) || "";
 const env_shutdownOnIdle: boolean = Deno.env.has(AUTO_SHUTDOWN); // y
 const env_updateWatcher: boolean = !Deno.env.has(DISABLE_AUTO_UPDATES); // y
 const env_multi_server: string = Deno.env.get(MULTI_SERVER) || ""; // y
+const env_preferred_log_size: number =
+  Number(Deno.env.get(PREFERRED_LOG_SIZE)) || 10000;
 const env_port: number = Number(Deno.env.get(PORT)) || 3000;
+const env_debug_mode: boolean = Deno.env.has(DEBUG_MODE); // y
 let env_backupPath: string = Deno.env.get(BACKUP_PATH) || ""; // /home/username/minecraft
 
 // Fix lazy user input
@@ -51,6 +56,8 @@ const STARTED = "STARTED";
 const STOPPED = "STOPPED";
 const SUCCESS = "SUCCESS";
 const FAILED = "FAILED";
+const DEBUG_MODE_LOG = ">DEBUG MODE LOG: ";
+const DEBUG_MODE_LOG_ERROR = ">DEBUG MODE ERROR LOG: ";
 
 const IDLE_SERVER_MINUTES_THRESHOLD = 30;
 const ONE_MINUTE = 60 * 1000;
@@ -76,6 +83,10 @@ const log = (content: string, isMCMessage = false) => {
   console.log(msg);
 };
 
+if (env_debug_mode)
+  log(
+    "DEBUG_MODE is enabled! To disable is, re-run without the flag set. This might cause unwanted log-spam!"
+  );
 log("Backup Path: " + env_backupPath);
 log(
   `Automatic Minecraft server updates are ${
@@ -300,9 +311,25 @@ const getNewestServerVersion = async (): Promise<string | null> => {
   const urlToCrawlNewestVersionNumber =
     "https://www.minecraft.net/en-us/download/server/bedrock";
 
-  const html = await (await fetch(urlToCrawlNewestVersionNumber)).text();
+  let html = "";
+  try {
+    html = await (await fetch(urlToCrawlNewestVersionNumber)).text();
+  } catch (e) {
+    if (env_debug_mode) {
+      errorDebug(
+        "Fetching the newest minecraft server version failed. Probably offline endpoint?"
+      );
+      errorDebug(e);
+      throw e;
+    }
+  }
 
   downloadUrl = html.match(DOWNLOAD_REGEX)?.[0] || null;
+  if (env_debug_mode) {
+    logDebug("Download URL is: " + downloadUrl);
+    logDebug("Extracted version is: " + html.match(DOWNLOAD_REGEX)?.[2]);
+  }
+
   return html.match(DOWNLOAD_REGEX)?.[2] || null;
 };
 
@@ -332,10 +359,22 @@ const checkServerUpdateDue = async (): Promise<string | null> => {
     const newestAvailableVersion = await getNewestServerVersion();
 
     if (!installedVersion) {
-      installedVersion = await readInstalledVersion();
+      try {
+        installedVersion = await readInstalledVersion();
+        if (env_debug_mode)
+          logDebug(
+            "Installed version read from system is: " + installedVersion
+          );
+      } catch (e) {
+        if (env_debug_mode) {
+          errorDebug("Could not read installed version file!");
+          errorDebug(e);
+        }
+        throw e;
+      }
     }
 
-    if (newestAvailableVersion === installedVersion) {
+    if (newestAvailableVersion === installedVersion && newestAvailableVersion) {
       console.log(
         `Update check: Already on the newest version! ${newestAvailableVersion}`
       );
@@ -361,19 +400,50 @@ const updateServer = async (version: string) => {
       );
       return null;
     }
-    const bedrockZipDownload = await fetch(downloadUrl);
-    const bedrockZipFile = await Deno.open(ZIP_FILE_PATH, {
-      create: true,
-      write: true,
-    });
-    await bedrockZipDownload.body?.pipeTo(bedrockZipFile.writable);
-    // bedrockZipFile.close();
 
-    log("Unpacking zip file...");
-    await ensureDir(EXTRACT_DIR);
-    await decompress(ZIP_FILE_PATH, EXTRACT_DIR);
-    log("Removing downloaded zip file...");
-    await Deno.remove(ZIP_FILE_PATH);
+    let bedrockZipDownload = null;
+    try {
+      bedrockZipDownload = await fetch(downloadUrl);
+    } catch (e) {
+      if (env_debug_mode) {
+        errorDebug(
+          "Coud not fetch update over the downloadUrl: " + downloadUrl
+        );
+        errorDebug(e);
+      }
+      throw e;
+    }
+
+    let bedrockZipFile = null;
+    try {
+      bedrockZipFile = await Deno.open(ZIP_FILE_PATH, {
+        create: true,
+        write: true,
+      });
+    } catch (e) {
+      if (env_debug_mode) {
+        errorDebug("Coud not open downloaded zip file.");
+        errorDebug(e);
+      }
+      throw e;
+    }
+
+    try {
+      await bedrockZipDownload.body?.pipeTo(bedrockZipFile.writable);
+      // bedrockZipFile.close();
+
+      log("Unpacking zip file...");
+      await ensureDir(EXTRACT_DIR);
+      await decompress(ZIP_FILE_PATH, EXTRACT_DIR);
+      log("Removing downloaded zip file...");
+      await Deno.remove(ZIP_FILE_PATH);
+    } catch (e) {
+      if (env_debug_mode) {
+        errorDebug("reading the zip and writing it somewhere failed.");
+        errorDebug(e);
+      }
+      throw e;
+    }
 
     // No installed version == Fresh install without excludes
     if (installedVersion) {
@@ -383,18 +453,40 @@ const updateServer = async (version: string) => {
       const filesToExcludeFromMerge = serverUpdateExclusionFiles;
       for (const fileName of filesToExcludeFromMerge) {
         const filePath = join(EXTRACT_DIR, fileName);
-        await Deno.remove(filePath);
+        try {
+          await Deno.remove(filePath);
+        } catch (e) {
+          if (env_debug_mode) {
+            errorDebug("Removing the excluded files failed.");
+            errorDebug(e);
+          }
+          throw e;
+        }
       }
     }
 
     log("Updating server...");
-    await mergeDirectoriesAndOverwriteExisting(
-      EXTRACT_DIR,
-      MINECRAFT_SERVER_DIR
-    );
-    Deno.remove(EXTRACT_DIR, { recursive: true });
+    try {
+      await mergeDirectoriesAndOverwriteExisting(
+        EXTRACT_DIR,
+        MINECRAFT_SERVER_DIR
+      );
+      Deno.remove(EXTRACT_DIR, { recursive: true });
+    } catch (e) {
+      if (env_debug_mode) {
+        errorDebug("Merging the update with the current minecraft dir failed.");
+        errorDebug(e);
+      }
+      throw e;
+    }
 
-    await setInstalledVersion(version);
+    try {
+      await setInstalledVersion(version);
+    } catch (e) {
+      errorDebug("Failed to write installed version" + version);
+      errorDebug(e);
+      throw e;
+    }
 
     log("Server update completed!");
   } catch {
@@ -431,6 +523,16 @@ const timer = (delayInMillis: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, delayInMillis);
   });
+
+const waitUntilMidnight = async () => {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  midnight.setDate(midnight.getDate() + 1);
+
+  while (new Date().getTime() < midnight.getTime()) {
+    await timer(5000);
+  }
+};
 
 const shutdownOnIdleWatcher = async () => {
   while (true) {
@@ -486,9 +588,29 @@ const serverUpdateWatcher = async () => {
   }
 };
 
+const logPurgerWatcher = async () => {
+  while (true) {
+    logQueue.splice(0, env_preferred_log_size);
+    await waitUntilMidnight();
+  }
+};
+
 startServer();
+logPurgerWatcher();
 if (env_shutdownOnIdle) shutdownOnIdleWatcher();
 if (env_updateWatcher) serverUpdateWatcher();
+
+const logDebug = (text: string) => {
+  const msg = DEBUG_MODE_LOG + text;
+  logQueue.unshift(msg);
+  console.log(msg);
+};
+
+const errorDebug = (text: string) => {
+  const error = DEBUG_MODE_LOG_ERROR + text;
+  logQueue.unshift(error);
+  console.error(error);
+};
 
 app.use(async (ctx, next) => {
   log(`${ctx.request.method} ${ctx.request.url}`);

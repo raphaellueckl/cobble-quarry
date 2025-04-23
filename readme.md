@@ -49,6 +49,7 @@ ADMIN_PW=admin123 MOD_PW=mod123 AUTO_SHUTDOWN=y DISABLE_AUTO_UPDATES=y BACKUP_PA
 - `MULTI_SERVER` If you run several servers on one machine and have `AUTO_SHUTDOWN` enabled, you need to set this to true, otherwise, one Minecraft server - if empty - will shutdown the host computer (and therefore kill all other servers).
 - `DISABLE_AUTO_UPDATES` If you don't want Cobble Quarry to get and install the newest Minecraft versions automatically, set this variable!
 - `PORT` If you want a specific port for the Website interface or if you run a `MULTI_SERVER` setup, you need to add separate ports. You cannot run multiple servers on the default port `3000`.
+- `ENABLE_DEBUG_MODE` (Not recommended) Only set this, if you want to get more detailed logs to pin point an issue. Having this always enabled usually is of no use and will spam your server logs. Not an issue and they will be cleaned up anyways, but it's hard to find actually interesting info with log spam enabled.
 
 ## (Optional) Extended Installation - With focus on saving electricity
 
