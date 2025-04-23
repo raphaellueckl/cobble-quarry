@@ -168,7 +168,7 @@ router
   })
   .post("/update", async (ctx) => {
     if (isAuthenticatedAsMod(ctx)) {
-      await startServerUpdateProcedure();
+      await startServerUpdateProcedure(true);
     } else {
       log(`No '${BACKUP_PATH}' environment variable given or wrong password.`);
     }
@@ -177,17 +177,19 @@ router
 const startBackupProcedure = async () => {
   await stopAndBackupServer(
     20,
-    "Starting minecraft backup. Restart in approximately one minute."
+    "Starting minecraft backup. Restart in approximately one minute.",
+    true
   );
   startServer();
 };
 
-const startServerUpdateProcedure = async () => {
+const startServerUpdateProcedure = async (forceBackup = false) => {
   const version = await checkServerUpdateDue();
   if (version) {
     await stopAndBackupServer(
       20,
-      "Starting server update. Restart within a few seconds."
+      "Starting server update. Restart within a few seconds.",
+      forceBackup
     );
     await updateServer(version);
     await startServer();
@@ -275,8 +277,8 @@ const startServer = async () => {
   }
 };
 
-const backupServer = async () => {
-  if (backupOnNextOccasion) {
+const backupServer = async (forceBackup = false) => {
+  if (backupOnNextOccasion || forceBackup) {
     const backupPath = env_backupPath + new Date().toISOString();
     await stdCopy.copy(Deno.cwd(), backupPath);
     await Deno.remove(backupPath + COBBLE_EXECUTABLE);
@@ -337,7 +339,6 @@ const readInstalledVersion = async (): Promise<string | null> => {
   try {
     return await Deno.readTextFile(INSTALLED_VERSION_PATH);
   } catch (_e) {
-    // File does not exist.
     log(`Error - Could not read: ${INSTALLED_VERSION_PATH}`);
     return null;
   }
@@ -494,11 +495,15 @@ const updateServer = async (version: string) => {
   }
 };
 
-const stopAndBackupServer = async (offset?: number, msg?: string) => {
+const stopAndBackupServer = async (
+  waitTime?: number,
+  msg?: string,
+  forceBackup = false
+) => {
   try {
-    if (offset) {
+    if (waitTime) {
       if (msg) await mcProcess?.stdin?.write(encoder.encode(msg));
-      for (let i = offset; i > 0; i--) {
+      for (let i = waitTime; i > 0; i--) {
         log(`Server stop in ${i}`);
         await mcProcess?.stdin?.write(encoder.encode(`Server stop in ${i}\n`));
         await timer(1000);
@@ -509,7 +514,7 @@ const stopAndBackupServer = async (offset?: number, msg?: string) => {
     await mcProcess?.stdin?.close();
     playerCount = 0;
 
-    await backupServer();
+    await backupServer(forceBackup);
   } catch {
     log("Closing or backupping the server failed!");
   }
