@@ -376,7 +376,7 @@ const checkServerUpdateDue = async (): Promise<string | null> => {
     }
 
     if (newestAvailableVersion === installedVersion && newestAvailableVersion) {
-      console.log(
+      log(
         `Update check: Already on the newest version! ${newestAvailableVersion}`
       );
       return null;
