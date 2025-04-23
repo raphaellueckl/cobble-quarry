@@ -106,7 +106,8 @@ Minecraft service configuration (adapt all values, especially the `username`!):
 ```bash
 [Unit]
 Description=Minecraft
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Environment="ADMIN_PW=admin123"
