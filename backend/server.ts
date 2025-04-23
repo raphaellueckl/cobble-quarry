@@ -161,6 +161,7 @@ router
   })
   .post("/backup", async (ctx) => {
     if (isAuthenticatedAsMod(ctx) && env_backupPath) {
+      log("Initiating minecraft backup...");
       await startBackupProcedure();
     } else {
       log(`No '${BACKUP_PATH}' environment variable given or wrong password.`);
@@ -168,6 +169,7 @@ router
   })
   .post("/update", async (ctx) => {
     if (isAuthenticatedAsMod(ctx)) {
+      log("Initiating minecraft update...");
       await startServerUpdateProcedure(true);
     } else {
       log(`No '${BACKUP_PATH}' environment variable given or wrong password.`);
