@@ -2,6 +2,8 @@
 
 ![Cobble Quarry UI](cq.png "Cobble Quarry UI")
 
+### [> Download the newest version here!](https://github.com/raphaellueckl/cobble-quarry/releases/latest/download/cobblequarry.zip)
+
 ## Features:
 
 - Automatic server updates.
