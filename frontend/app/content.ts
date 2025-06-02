@@ -20,6 +20,19 @@ export class Content extends LitElement {
       margin: 12px 0;
     }
 
+    .pw-hint {
+      background-color: red;
+      padding: 4px;
+      margin-bottom: 0;
+      margin-top: 8px;
+      border-style: double;
+      width: fit-content;
+    }
+
+    .hidden {
+      display: none;
+    }
+
     .action-buttons {
       display: flex;
       flex-wrap: wrap;
@@ -87,6 +100,11 @@ export class Content extends LitElement {
   }
 
   handlePWChange(ev) {
+    if (ev.target.value) {
+      this.shadowRoot.querySelector(".pw-hint").classList.add("hidden");
+    } else {
+      this.shadowRoot.querySelector(".pw-hint").classList.remove("hidden");
+    }
     store.dispatchEvent(
       new CustomEvent(Events.USER_PW_CHANGED, { detail: ev?.target?.value })
     );
@@ -119,6 +137,7 @@ export class Content extends LitElement {
   handleMouseOver(ev) {
     if (!this.passwordInput.value) {
       const elem = ev.target;
+      this.shadowRoot.querySelector(".pw-hint").classList.remove("hidden");
       ev.target.classList.add("run-away");
       setTimeout(() => {
         elem.classList.remove("run-away");
@@ -154,6 +173,7 @@ export class Content extends LitElement {
             @change="${this.handlePWChange}"
             .value="${this.prefilledPW}"
           />
+          <p class="hidden pw-hint">Enter password to use buttons!</p>
         </label>
         <h2 class="section">Actions</h2>
         <div class="action-buttons">
