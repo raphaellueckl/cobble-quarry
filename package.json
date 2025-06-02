@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "serve": "cd frontend && npm run serve"
+  },
+  "author": "Raphael Lückl",
+  "license": "ISC"
+}

@@ -1,5 +1,5 @@
 {
-  "name": "esbuild-aem-microfrontend",
+  "name": "cobble-quarry",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "release": "npm run build && rm -rf ../release && mkdir ../release/ && mkdir ../release/cobblequarry && cp -R ./public/* ../release/cobblequarry && deno compile --output ../release/cobble --target x86_64-unknown-linux-gnu --allow-env --allow-net --allow-read --allow-write --allow-run --allow-sys ../backend/server.ts && cd ../release/ && zip -r ../cobblequarry.zip * && cd .. && rm -rf release"
   },
-  "author": "",
+  "author": "Raphael Lückl",
   "license": "ISC",
   "dependencies": {
     "lit": "^2.1.2"
