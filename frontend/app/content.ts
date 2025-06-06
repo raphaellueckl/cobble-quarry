@@ -1,23 +1,31 @@
 import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, query, state } from "lit/decorators.js";
 import { store, Events } from "./store";
+import { resetUL, globalStyles } from "./globals";
 
 @customElement("cq-content")
 export class Content extends LitElement {
   static styles = css`
+    ${globalStyles}
+    ${resetUL}
+
+
     .content {
       display: flex;
       flex-direction: column;
       margin: 8px;
 
-      font-family: "content-font";
-      font-size: 24px;
       font-weight: 600;
     }
 
     .section {
       font-size: 36px;
       margin: 12px 0;
+    }
+
+    .pw-input {
+      border: 3px inset black;
+      background-color: rgba(255, 255, 255, 0.9);
     }
 
     .pw-hint {
@@ -43,9 +51,10 @@ export class Content extends LitElement {
       margin: 2px 4px 2px 0;
       width: 120px;
       height: 50px;
-      font-family: "content-font";
       font-size: 24px;
       line-height: 0.8;
+      border-radius: 0;
+      border: 3px outset black;
     }
 
     pre {
@@ -55,19 +64,14 @@ export class Content extends LitElement {
     }
 
     .logs {
-      border: 1px solid black;
-      border-radius: 12px;
+      border: 3px inset black;
+      padding: 4px;
+      background-color: rgba(255, 255, 255, 0.2);
     }
 
-    /* Reset UL */
-    ul {
-      list-style: none;
-      padding: 6px;
-      margin: 0;
-
-      height: 500px;
-      overflow: auto;
-      font-size: 14px;
+    .command-input {
+      border: 3px inset black;
+      background-color: rgba(255, 255, 255, 0.9);
     }
 
     .run-away {
@@ -168,7 +172,7 @@ export class Content extends LitElement {
           Password:
           <input
             id="password"
-            class="pw"
+            class="pw-input"
             type="password"
             @change="${this.handlePWChange}"
             .value="${this.prefilledPW}"

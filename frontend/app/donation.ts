@@ -4,6 +4,12 @@ import { customElement } from "lit/decorators.js";
 @customElement("cq-donation")
 export class Donation extends LitElement {
   static styles = css`
+    * {
+      font-family: "content-font";
+      font-size: 24px;
+      line-height: 0.8;
+    }
+
     a {
       all: unset;
       cursor: pointer;
@@ -30,8 +36,6 @@ export class Donation extends LitElement {
       padding: 0 40px;
       background-color: rgb(244, 164, 96);
 
-      font-family: "content-font";
-      font-size: 24px;
       font-weight: 600;
     }
 
