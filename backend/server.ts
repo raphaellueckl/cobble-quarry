@@ -313,11 +313,13 @@ const mergeDirectoriesAndOverwriteExisting = async (
 
 const getNewestServerVersion = async (): Promise<string | null> => {
   const urlToCrawlNewestVersionNumber =
-    "https://www.minecraft.net/en-us/download/server/bedrock";
+    "https://net-secondary.web.minecraft-services.net/api/v1.0/download/links";
 
-  let html = "";
+  let objectWithVersions = null;
   try {
-    html = await (await fetch(urlToCrawlNewestVersionNumber)).text();
+    objectWithVersions = await (
+      await fetch(urlToCrawlNewestVersionNumber)
+    ).json();
   } catch (e) {
     if (env_debug_mode) {
       errorDebug(
@@ -328,13 +330,20 @@ const getNewestServerVersion = async (): Promise<string | null> => {
     }
   }
 
-  downloadUrl = html.match(DOWNLOAD_REGEX)?.[0] || null;
+  downloadUrl = objectWithVersions.result.links.filter(
+    (item: any) =>
+      item.downloadType.toLowerCase().includes("linux") &&
+      !item.downloadType.toLowerCase().includes("preview")
+  )[0]?.downloadUrl;
+  const newestVersion = downloadUrl
+    ?.split("bedrock-server-")?.[1]
+    ?.split(".zip")?.[0];
   if (env_debug_mode) {
     logDebug("Download URL is: " + downloadUrl);
-    logDebug("Extracted version is: " + html.match(DOWNLOAD_REGEX)?.[2]);
+    logDebug("Extracted version is: " + newestVersion);
   }
 
-  return html.match(DOWNLOAD_REGEX)?.[2] || null;
+  return newestVersion || null;
 };
 
 const readInstalledVersion = async (): Promise<string | null> => {
